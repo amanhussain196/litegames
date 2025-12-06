@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whack-a-Mole | Man Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #8D6E63;
+            --grass-color: #4CAF50;
+            --hole-color: #3E2723;
+            --accent: #FFD54F;
+            --text-color: #fff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background-image: radial-gradient(#5D4037 15%, transparent 16%), radial-gradient(#5D4037 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 3px 3px 0 #3E2723;
+            color: var(--accent);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-family: 'Fredoka', sans-serif;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 30px;
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            background: var(--grass-color);
+            border-radius: 20px;
+            box-shadow: 0 10px 0 #2E7D32;
+            position: relative;
+            outline: none;
+            /* Remove focus outline */
+        }
+
+        .hole {
+            width: 100px;
+            height: 100px;
+            background: var(--hole-color);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            border: 4px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .hole-number {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hole.whacked-wrong {
+            border-color: #FF5252;
+            box-shadow: 0 0 15px #FF5252, inset 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .mole {
+            width: 80%;
+            height: 80%;
+            background: #D7CCC8;
+            border-radius: 40% 40% 10% 10%;
+            position: absolute;
+            bottom: -100%;
+            left: 10%;
+            transition: bottom 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .mole::after {
+            content: '..';
+            color: #3E2723;
+            font-size: 40px;
+            font-weight: bold;
+            margin-top: -20px;
+            letter-spacing: 5px;
+        }
+
+        .mole::before {
+            content: '';
+            position: absolute;
+            width: 40%;
+            height: 30%;
+            background: #FFCCBC;
+            border-radius: 50%;
+            top: 50%;
+        }
+
+        .hole.up .mole {
+            bottom: 0;
+        }
+
+        .hole.whacked .mole {
+            background: #FF5252;
+            transform: scale(0.9);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: white;
+            padding: 3rem;
+            border-radius: 30px;
+            text-align: center;
+            color: #2c3e50;
+            animation: popIn 0.3s;
+            max-width: 90%;
+            width: 400px;
+            border: 5px solid var(--grass-color);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        button {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            border: none;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: var(--grass-color);
+            color: white;
+            font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 4px 0 #2E7D32;
+            transition: all 0.1s;
+        }
+
+        button:hover,
+        button:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #2E7D32;
+            outline: 3px solid #3E2723;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #2E7D32;
+        }
+
+        .difficulty-btn {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            margin: 0 5px;
+            background: #795548;
+            box-shadow: 0 4px 0 #4E342E;
+        }
+
+        .difficulty-btn:hover {
+            box-shadow: 0 6px 0 #4E342E;
+        }
+
+        .difficulty-btn:active {
+            box-shadow: 0 2px 0 #4E342E;
+        }
+
+        .difficulty-btn.selected {
+            background: #FFD54F;
+            color: #3E2723;
+            box-shadow: 0 4px 0 #FF6F00;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover,
+        .back-btn:focus {
+            background: rgba(0, 0, 0, 0.5);
+            outline: 2px solid var(--accent);
+        }
+
+        .controls-hint {
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+
+        .key-badge {
+            display: inline-block;
+            background: #3E2723;
+            color: #FFD54F;
+            padding: 2px 8px;
+            border-radius: 5px;
+            margin: 0 3px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        /* Floating Score Animation */
+        .float-score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+            animation: floatUp 0.5s ease-out forwards;
+            z-index: 10;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -150%);
+            }
+        }
+
+        /* TV Mode */
+        body.mode-tv {
+            cursor: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="back-btn">← Back</a>
+
+    <h1>Whack-a-Mole</h1>
+
+    <div class="stats-bar">
+        <div>Score: <span id="score">0</span></div>
+        <div>Time: <span id="time">30</span></div>
+    </div>
+
+    <div class="game-board" id="board" tabindex="0">
+        <!-- Holes generated by JS -->
+    </div>
+
+    <div class="controls-hint">
+        <p>Press keys <span class="key-badge">1</span>-<span class="key-badge">9</span> to whack!</p>
+        <p>Hit Mole: +2s | Miss: -1s</p>
+    </div>
+
+    <!-- Start Modal -->
+    <div class="modal-overlay" id="startModal">
+        <div class="modal">
+            <h2>Ready to Whack?</h2>
+            <p>Select Difficulty:</p>
+            <div style="margin-bottom: 20px;">
+                <button class="difficulty-btn" onclick="selectDifficulty('easy')">Easy</button>
+                <button class="difficulty-btn selected" onclick="selectDifficulty('medium')">Medium</button>
+                <button class="difficulty-btn" onclick="selectDifficulty('hard')">Hard</button>
+            </div>
+            <p>Press the number keys to hit the moles!</p>
+            <button id="startBtn" onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal" style="display: none;">
+        <div class="modal">
+            <h2>Time's Up!</h2>
+            <p>Your Score: <span id="finalScore">0</span></p>
+            <button onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const startModal = document.getElementById('startModal');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalScoreDisplay = document.getElementById('finalScore');
+
+        let holes = [];
+        let lastHole;
+        let timeUp = false;
+        let score = 0;
+        let timeLeft = 30;
+        let timerInterval;
+        let currentDifficulty = 'medium';
+
+        function selectDifficulty(diff) {
+            currentDifficulty = diff;
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.textContent.toLowerCase() === diff) {
+                    btn.classList.add('selected');
+                    btn.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            });
+        }
+
+        const difficulties = ['easy', 'medium', 'hard'];
+
+        function cycleDifficulty(direction) {
+            let currentIndex = difficulties.indexOf(currentDifficulty);
+            currentIndex += direction;
+
+            if (currentIndex < 0) currentIndex = difficulties.length - 1;
+            if (currentIndex >= difficulties.length) currentIndex = 0;
+
+            selectDifficulty(difficulties[currentIndex]);
+        }
+
+        // Init Board
+        function createBoard() {
+            for (let i = 0; i < 9; i++) {
+                const hole = document.createElement('div');
+                hole.classList.add('hole');
+                hole.dataset.index = i;
+
+                // Number Label
+                const numberLabel = document.createElement('div');
+                numberLabel.classList.add('hole-number');
+                numberLabel.textContent = i + 1;
+                hole.appendChild(numberLabel);
+
+                const mole = document.createElement('div');
+                mole.classList.add('mole');
+
+                hole.appendChild(mole);
+                board.appendChild(hole);
+                holes.push(hole);
+
+                // Mouse interaction
+                hole.addEventListener('mousedown', () => whack(hole));
+                hole.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    whack(hole);
+                });
+            }
+        }
+
+        function randomTime(min, max) {
+            return Math.round(Math.random() * (max - min) + min);
+        }
+
+        function randomHole(holes) {
+            const idx = Math.floor(Math.random() * holes.length);
+            const hole = holes[idx];
+            if (hole === lastHole) {
+                return randomHole(holes);
+            }
+            lastHole = hole;
+            return hole;
+        }
+
+        function peep() {
+            let minTime, maxTime;
+            let molesToSpawn = 1;
+
+            if (currentDifficulty === 'easy') {
+                minTime = 800;
+                maxTime = 1500;
+            } else if (currentDifficulty === 'medium') {
+                minTime = 500;
+                maxTime = 1000;
+            } else { // Hard
+                minTime = 400;
+                maxTime = 800;
+                // Chance for double mole spawn
+                if (Math.random() > 0.5) molesToSpawn = 2;
+            }
+
+            const time = randomTime(minTime, maxTime);
+
+            for (let i = 0; i < molesToSpawn; i++) {
+                const hole = randomHole(holes);
+                hole.classList.add('up');
+                setTimeout(() => {
+                    hole.classList.remove('up');
+                    if (!timeUp && i === 0) peep(); // Only trigger next peep once per cycle
+                }, time);
+            }
+        }
+
+        function startGame() {
+            startModal.style.display = 'none';
+            gameOverModal.style.display = 'none';
+            scoreDisplay.textContent = 0;
+            timeDisplay.textContent = 30;
+            score = 0;
+            timeLeft = 30;
+            timeUp = false;
+
+            board.focus();
+
+            peep();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            timeUp = true;
+            clearInterval(timerInterval);
+            finalScoreDisplay.textContent = score;
+            gameOverModal.style.display = 'flex';
+            setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
+        }
+
+        function showFloatText(hole, text, color) {
+            const floatEl = document.createElement('div');
+            floatEl.classList.add('float-score');
+            floatEl.textContent = text;
+            floatEl.style.color = color;
+            hole.appendChild(floatEl);
+            setTimeout(() => floatEl.remove(), 500);
+        }
+
+        function whack(hole) {
+            if (timeUp) return;
+
+            if (hole.classList.contains('up')) {
+                // Correct Hit
+                score++;
+                timeLeft += 2; // Bonus time
+                timeDisplay.textContent = timeLeft;
+
+                hole.classList.remove('up');
+                hole.classList.add('whacked');
+                setTimeout(() => hole.classList.remove('whacked'), 200);
+                scoreDisplay.textContent = score;
+
+                showFloatText(hole, '+2s', '#4CAF50'); // Green
+                playTone(600, 'square', 0.1);
+            } else {
+                // Wrong Hit
+                timeLeft -= 1; // Penalty time
+                if (timeLeft < 0) timeLeft = 0;
+                timeDisplay.textContent = timeLeft;
+
+                hole.classList.add('whacked-wrong');
+                setTimeout(() => hole.classList.remove('whacked-wrong'), 200);
+
+                showFloatText(hole, '-1s', '#FF5252'); // Red
+                playTone(150, 'sawtooth', 0.2);
+            }
+        }
+
+        function playTone(freq, type, duration) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        }
+
+        // Input Handling
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37;
+            const TV_RIGHT = 39;
+            const TV_ENTER = 13;
+            const TV_OK = 13;
+            const TV_BACK = 4;
+
+            // Alternate TV Keys
+            const ALT_LEFT = 21;
+            const ALT_RIGHT = 22;
+            const ALT_ENTER = 23;
+            const ALT_BACK = 4;
+            const TIZEN_BACK = 10009;
+
+            let handled = false;
+
+            // Handle Back Button
+            if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
+                window.location.href = 'index.html';
+                handled = true;
+            }
+
+            // Modal handling
+            if (startModal.style.display !== 'none') {
+                if (['4', 'ArrowLeft'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT) {
+                    cycleDifficulty(-1);
+                    handled = true;
+                } else if (['6', 'ArrowRight'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT) {
+                    cycleDifficulty(1);
+                    handled = true;
+                } else if (['Enter', ' ', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
+                    const focusedBtn = document.activeElement;
+                    if (focusedBtn && focusedBtn.tagName === 'BUTTON') {
+                        focusedBtn.click();
+                    } else {
+                        startGame();
+                    }
+                    handled = true;
+                }
+            } else if (gameOverModal.style.display !== 'none') {
+                if (['Enter', ' ', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
+                    const focusedBtn = document.activeElement;
+                    if (focusedBtn && focusedBtn.tagName === 'BUTTON') {
+                        focusedBtn.click();
+                    } else {
+                        startGame();
+                    }
+                    handled = true;
+                }
+            } else {
+                // Direct mapping 1-9
+                const keyIndex = parseInt(key) - 1;
+                if (!isNaN(keyIndex) && keyIndex >= 0 && keyIndex < 9) {
+                    whack(holes[keyIndex]);
+                    handled = true;
+                } else if (key === '0' || key.toLowerCase() === 'f') {
+                    toggleFullscreen();
+                    handled = true;
+                }
+            }
+
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // Check mode
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            if (mode) {
+                document.body.classList.add(`mode-${mode}`);
+            }
+        });
+
+        // Init
+        createBoard();
+
+        // Focus start button on load
+        window.onload = () => {
+            if (startModal.style.display !== 'none') {
+                const startBtn = document.getElementById('startBtn');
+                if (startBtn) startBtn.focus();
+            } else {
+                board.focus();
+            }
+        };
+
+        // Keep focus
+        board.addEventListener('blur', () => {
+            if (!timeUp && startModal.style.display === 'none' && gameOverModal.style.display === 'none') {
+                setTimeout(() => {
+                    if (!document.activeElement || document.activeElement === document.body) {
+                        board.focus();
+                    }
+                }, 200);
+            }
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+    </script>
+</body>
+
+</html>

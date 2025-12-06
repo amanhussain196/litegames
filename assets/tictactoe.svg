@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="60" fill="#fff3e0"/>
+  <line x1="180" y1="80" x2="180" y2="432" stroke="#ff6b6b" stroke-width="30" stroke-linecap="round"/>
+  <line x1="332" y1="80" x2="332" y2="432" stroke="#ff6b6b" stroke-width="30" stroke-linecap="round"/>
+  <line x1="80" y1="180" x2="432" y2="180" stroke="#ff6b6b" stroke-width="30" stroke-linecap="round"/>
+  <line x1="80" y1="332" x2="432" y2="332" stroke="#ff6b6b" stroke-width="30" stroke-linecap="round"/>
+  
+  <!-- O -->
+  <circle cx="100" cy="100" r="35" stroke="#4ecdc4" stroke-width="20" fill="none" transform="translate(156, 156)"/>
+  
+  <!-- X -->
+  <line x1="80" y1="80" x2="150" y2="150" stroke="#4ecdc4" stroke-width="20" stroke-linecap="round" transform="translate(0, 0)"/>
+  <line x1="150" y1="80" x2="80" y2="150" stroke="#4ecdc4" stroke-width="20" stroke-linecap="round" transform="translate(0, 0)"/>
+</svg>

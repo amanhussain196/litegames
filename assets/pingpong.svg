@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Table Surface hint -->
+  <rect x="10" y="100" width="180" height="80" fill="#2980B9" rx="5" opacity="0.2" />
+  <line x1="100" y1="100" x2="100" y2="180" stroke="white" stroke-width="2" opacity="0.5" />
+  
+  <!-- Paddle 1 (Red) -->
+  <g transform="rotate(-15, 60, 100)">
+    <rect x="55" y="90" width="10" height="40" fill="#D35400" rx="3" /> <!-- Handle -->
+    <circle cx="60" cy="80" r="35" fill="#E74C3C" stroke="#C0392B" stroke-width="3" /> <!-- Face -->
+    <circle cx="60" cy="80" r="30" fill="none" stroke="#C0392B" stroke-width="1" opacity="0.5" />
+  </g>
+  
+  <!-- Paddle 2 (Blue) -->
+  <g transform="rotate(15, 140, 100)">
+    <rect x="135" y="90" width="10" height="40" fill="#2C3E50" rx="3" /> <!-- Handle -->
+    <circle cx="140" cy="80" r="35" fill="#3498DB" stroke="#2980B9" stroke-width="3" /> <!-- Face -->
+    <circle cx="140" cy="80" r="30" fill="none" stroke="#2980B9" stroke-width="1" opacity="0.5" />
+  </g>
+  
+  <!-- Ball -->
+  <circle cx="100" cy="60" r="10" fill="#ECF0F1" stroke="#BDC3C7" stroke-width="1" />
+  
+  <!-- Motion Lines -->
+  <path d="M90,60 L70,65" stroke="#BDC3C7" stroke-width="2" stroke-linecap="round" />
+  <path d="M110,60 L130,55" stroke="#BDC3C7" stroke-width="2" stroke-linecap="round" />
+</svg>

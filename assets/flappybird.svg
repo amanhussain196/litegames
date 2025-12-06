@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="60" fill="#e1f5fe"/>
+  <!-- Bird Body -->
+  <ellipse cx="256" cy="256" rx="120" ry="100" fill="#ffe66d"/>
+  <!-- Eye -->
+  <circle cx="310" cy="220" r="30" fill="#ffffff"/>
+  <circle cx="320" cy="220" r="10" fill="#2d3436"/>
+  <!-- Beak -->
+  <path d="M340 260 L390 280 L340 300 Z" fill="#ff6b6b"/>
+  <!-- Wing -->
+  <path d="M180 260 c20 -40 80 -40 100 0 c-20 20 -80 20 -100 0" fill="#ffffff"/>
+</svg>
