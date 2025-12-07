@@ -1,0 +1,164 @@
+
+// Supabase Configuration
+// TODO: Replace with your actual Supabase URL and Anon Key
+const SUPABASE_URL = 'https://rydsgfbhbhenquxqvdct.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5ZHNnZmJoYmhlbnF1eHF2ZGN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwOTgyMDAsImV4cCI6MjA4MDY3NDIwMH0.nN6MvxbJvUaxEmL-xCk-9DcRKGqWDHUw09xFid9qgQU';
+
+let supabase;
+
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase initialized');
+} catch (e) {
+    console.error('Supabase initialization failed. Make sure the CDN script is loaded.', e);
+}
+
+const AuthManager = {
+    // Check if username is available
+    async checkUsername(username) {
+        if (!username || username.length < 4) return { available: false, message: 'Too short' };
+
+        try {
+            const { data, error } = await supabase
+                .from('users_profile')
+                .select('username')
+                .eq('username', username)
+                .single();
+
+            if (error && error.code === 'PGRST116') {
+                // No rows found, so username is available
+                return { available: true, message: '✅ Available' };
+            } else if (data) {
+                return { available: false, message: '❌ Username already taken' };
+            } else {
+                return { available: false, message: 'Error checking username' };
+            }
+        } catch (err) {
+            console.error(err);
+            return { available: false, message: 'Error checking username' };
+        }
+    },
+
+    // Check if email is available (optional, Supabase Auth handles this too)
+    async checkEmail(email) {
+        if (!email || !email.includes('@')) return { available: false, message: 'Invalid email' };
+
+        try {
+            const { data, error } = await supabase
+                .from('users_profile')
+                .select('email')
+                .eq('email', email)
+                .single();
+
+            if (error && error.code === 'PGRST116') {
+                return { available: true, message: '✅ Available' };
+            } else if (data) {
+                return { available: false, message: '❌ Email already registered' };
+            }
+            return { available: false, message: 'Error checking email' };
+        } catch (err) {
+            console.error(err);
+            return { available: false, message: 'Error checking email' };
+        }
+    },
+
+    // Sign Up
+    async signUp(username, email, password) {
+        try {
+            // 1. Create Auth User
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (authError) throw authError;
+
+            if (authData.user) {
+                // 2. Create Profile
+                const { error: profileError } = await supabase
+                    .from('users_profile')
+                    .insert([
+                        {
+                            id: authData.user.id,
+                            username: username,
+                            email: email,
+                            score: 0
+                        }
+                    ]);
+
+                if (profileError) {
+                    // If profile creation fails, we might want to cleanup the auth user, 
+                    // but for now let's just throw
+                    throw profileError;
+                }
+
+                // Success
+                this.setLocalSession(username, authData.session);
+                return { success: true };
+            }
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // Sign In
+    async signIn(loginIdentifier, password) {
+        try {
+            let email = loginIdentifier;
+
+            // If it doesn't look like an email, assume it's a username and lookup email
+            if (!loginIdentifier.includes('@')) {
+                const { data, error } = await supabase
+                    .from('users_profile')
+                    .select('email')
+                    .eq('username', loginIdentifier)
+                    .single();
+
+                if (error || !data) {
+                    return { success: false, message: 'Username not found' };
+                }
+                email = data.email;
+            }
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) throw error;
+
+            // Get username if we logged in with email
+            let username = loginIdentifier;
+            if (loginIdentifier.includes('@')) {
+                const { data: profile } = await supabase
+                    .from('users_profile')
+                    .select('username')
+                    .eq('id', data.user.id)
+                    .single();
+                if (profile) username = profile.username;
+            }
+
+            this.setLocalSession(username, data.session);
+            return { success: true };
+
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    setLocalSession(username, session) {
+        localStorage.setItem('user_name', username);
+        localStorage.setItem('is_logged_in', 'true');
+        if (session) {
+            localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+        }
+    },
+
+    logout() {
+        supabase.auth.signOut();
+        localStorage.removeItem('user_name');
+        localStorage.removeItem('is_logged_in');
+        localStorage.removeItem('supabase.auth.token');
+        window.location.reload();
+    }
+};
