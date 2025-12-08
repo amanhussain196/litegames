@@ -543,6 +543,7 @@
             border-color: var(--secondary);
             background: white;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            outline: none;
         }
 
         .device-icon {
@@ -698,10 +699,8 @@
             <ul>
                 <li><a href="#" class="active">HOME</a></li>
                 <li><a href="#games">GAMES</a></li>
-                <li><a href="#"
-                        onclick="document.getElementById('aboutModal').style.display='flex'; return false;">ABOUT US</a>
-                </li>
-                <li><a href="#">SHOP</a></li>
+                <li><a href="about.html">ABOUT US</a></li>
+                <li><a href="shop.html">SHOP</a></li>
             </ul>
         </nav>
         <div style="display: flex; align-items: center;">
@@ -866,10 +865,10 @@
                 <ul>
                     <li><a href="#">Home</a></li>
                     <li><a href="#games">Games</a></li>
-                    <li><a href="#"
-                            onclick="document.getElementById('aboutModal').style.display='flex'; return false;">About
-                            Us</a></li>
-                    <li><a href="#">Contact</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -1108,9 +1107,7 @@
                     const firstFocusable = document.querySelector('a, button, [tabindex="0"]');
                     if (firstFocusable) firstFocusable.focus();
                 }
-            }
-
-                , 100);
+            }, 100);
         }
 
         function applyDeviceMode(mode) {
@@ -1121,160 +1118,159 @@
 
             // Toggle TV Legend
             const tvLegend = document.getElementById('tvLegend');
-
-            if (mode === 'tv') {
-                tvLegend.style.display = 'flex';
-            }
-
-            else {
-                tvLegend.style.display = 'none';
-            }
-
-            // TV Navigation Logic
-            if (mode === 'tv') {
-                enableTVNavigation();
+            if (tvLegend) {
+                if (mode === 'tv') {
+                    tvLegend.style.display = 'flex';
+                } else {
+                    tvLegend.style.display = 'none';
+                }
             }
         }
 
         function enableTVNavigation() {
-            let focusableElements = document.querySelectorAll('a, button, [tabindex="0"]');
-            let currentIndex = 0;
+            if (window.tvNavigationEnabled) return;
+            window.tvNavigationEnabled = true;
 
-            // Initial focus
-            if (focusableElements.length > 0) {
-                focusableElements[0].focus();
+            function getFocusables() {
+                const all = document.querySelectorAll('a[href], button, input, [tabindex]:not([tabindex="-1"])');
+                return Array.from(all).filter(el => {
+                    return el.offsetWidth > 0 && el.offsetHeight > 0 && window.getComputedStyle(el).display !== 'none';
+                });
             }
 
             document.addEventListener('keydown', (e) => {
-                if (!document.body.classList.contains('mode-tv')) return;
+                const map = {
+                    '2': 'UP', 'ArrowUp': 'UP',
+                    '8': 'DOWN', 'ArrowDown': 'DOWN',
+                    '4': 'LEFT', 'ArrowLeft': 'LEFT',
+                    '6': 'RIGHT', 'ArrowRight': 'RIGHT',
+                    '5': 'SELECT', 'Enter': 'SELECT', ' ': 'SELECT'
+                };
 
-                // Re-query elements in case DOM changed
-                focusableElements = document.querySelectorAll('a, button, [tabindex="0"]');
-                const activeEl = document.activeElement;
-                currentIndex = Array.from(focusableElements).indexOf(activeEl);
-
-                let nextIndex = currentIndex;
-                let action = null;
-
-                // Map keys: 2=Up, 8=Down, 4=Left, 6=Right, 5=Select/Enter
-                if (e.key === '2' || e.key === 'ArrowUp') action = 'UP';
-                if (e.key === '8' || e.key === 'ArrowDown') action = 'DOWN';
-                if (e.key === '4' || e.key === 'ArrowLeft') action = 'LEFT';
-                if (e.key === '6' || e.key === 'ArrowRight') action = 'RIGHT';
-                if (e.key === '5' || e.key === 'Enter') action = 'SELECT';
-
+                const action = map[e.key];
                 if (!action) return;
 
                 e.preventDefault();
 
+                const current = document.activeElement;
+                const focusables = getFocusables();
+
                 if (action === 'SELECT') {
-                    activeEl.click();
+                    if (current) {
+                        if (current.classList.contains('game-card')) {
+                            const link = current.querySelector('a');
+                            if (link) link.click();
+                            else current.click();
+                        } else {
+                            current.click();
+                        }
+                    }
                     return;
                 }
 
-                // Spatial Navigation Logic (Simplified)
-                const rect = activeEl.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
+                if (!current || !focusables.includes(current)) {
+                    if (focusables.length > 0) focusables[0].focus();
+                    return;
+                }
+
+                const curRect = current.getBoundingClientRect();
+                const curCx = curRect.left + curRect.width / 2;
+                const curCy = curRect.top + curRect.height / 2;
 
                 let bestCandidate = null;
-                let minDistance = Infinity;
+                let minScore = Infinity;
 
-                focusableElements.forEach((el, index) => {
-                    if (el === activeEl) return;
+                focusables.forEach(el => {
+                    if (el === current) return;
 
-                    const r = el.getBoundingClientRect();
-                    const ex = r.left + r.width / 2;
-                    const ey = r.top + r.height / 2;
+                    const rect = el.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
 
-                    const dx = ex - cx;
-                    const dy = ey - cy;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    let dx = cx - curCx;
+                    let dy = cy - curCy;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
 
                     let isCandidate = false;
+                    let alignment = 0;
 
                     if (action === 'UP') {
-                        // Strict Up: dy must be negative
-                        if (dy < -10 && Math.abs(dx) < Math.abs(dy) * 2.0) isCandidate = true;
-                    }
-
-                    else if (action === 'DOWN') {
-                        // Strict Down: dy must be positive
-                        if (dy > 10 && Math.abs(dx) < Math.abs(dy) * 2.0) isCandidate = true;
+                        if (dy < -10) {
+                            alignment = Math.abs(dx);
+                            if (alignment < (curRect.width + rect.width) / 2 || alignment < Math.abs(dy)) isCandidate = true;
+                        }
+                    } else if (action === 'DOWN') {
+                        if (dy > 10) {
+                            alignment = Math.abs(dx);
+                            if (alignment < (curRect.width + rect.width) / 2 || alignment < Math.abs(dy)) isCandidate = true;
+                        }
                     } else if (action === 'LEFT') {
-                        if (dx < -10 && Math.abs(dy) < Math.abs(dx) * 2.0) isCandidate = true;
+                        if (dx < -10) {
+                            alignment = Math.abs(dy);
+                            if (alignment < (curRect.height + rect.height) / 2 || alignment < Math.abs(dx)) isCandidate = true;
+                        }
                     } else if (action === 'RIGHT') {
-                        if (dx > 10 && Math.abs(dy) < Math.abs(dx) * 2.0) isCandidate = true;
+                        if (dx > 10) {
+                            alignment = Math.abs(dy);
+                            if (alignment < (curRect.height + rect.height) / 2 || alignment < Math.abs(dx)) isCandidate = true;
+                        }
                     }
 
                     if (isCandidate) {
-                        if (dist < minDistance) {
-                            minDistance = dist;
+                        const score = dist + (alignment * 2.5);
+                        if (score < minScore) {
+                            minScore = score;
                             bestCandidate = el;
                         }
                     }
                 });
 
-                let nextElement = bestCandidate;
-
-                // Fallback to linear navigation if spatial fails
-                if (!nextElement) {
-                    if (action === 'RIGHT' || action === 'DOWN') nextIndex = (currentIndex + 1) % focusableElements.length;
-                    if (action === 'LEFT' || action === 'UP') nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
-                    nextElement = focusableElements[nextIndex];
+                if (bestCandidate) {
+                    bestCandidate.focus();
+                    bestCandidate.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-
-                if (nextElement) {
-                    nextElement.focus();
-
-                    nextElement.scrollIntoView({
-                        behavior: 'smooth', block: 'center'
-                    });
-                }
-
             });
         }
 
-        // Check on load
         window.addEventListener('DOMContentLoaded', () => {
-            // Make game cards focusable
             const cards = document.querySelectorAll('.game-card');
-            cards.forEach(card => card.setAttribute('tabindex', '0'));
+            cards.forEach(card => {
+                card.setAttribute('tabindex', '0');
+                const innerLink = card.querySelector('a');
+                if (innerLink) {
+                    innerLink.setAttribute('tabindex', '-1');
+                }
+            });
+
+            enableTVNavigation();
 
             const modal = document.getElementById('deviceModal');
-            modal.style.display = 'flex';
-
-            setTimeout(() => {
-                const firstOption = modal.querySelector('.device-option');
-                if (firstOption) firstOption.focus();
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    const firstOption = modal.querySelector('.device-option');
+                    if (firstOption) firstOption.focus();
+                }, 100);
             }
 
-                , 100);
-
-            // Check login state
             const isLoggedIn = localStorage.getItem('is_logged_in');
             const userName = localStorage.getItem('user_name');
 
             if (isLoggedIn === 'true' && userName) {
                 const loginBtn = document.querySelector('.btn-login');
-
                 if (loginBtn) {
                     loginBtn.textContent = `Hi, ${userName}`;
                     loginBtn.href = '#';
                     loginBtn.style.background = 'var(--secondary)';
                     loginBtn.title = 'Click to Logout';
-
                     loginBtn.onclick = (e) => {
                         e.preventDefault();
-
                         if (confirm('Log out?')) {
                             localStorage.removeItem('is_logged_in');
                             localStorage.removeItem('user_name');
                             window.location.reload();
                         }
-                    }
-
-                        ;
+                    };
                 }
             }
         });
