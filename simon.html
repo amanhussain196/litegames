@@ -1,1 +1,509 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Simon Says | Man Games</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>:root{--bg-color:#2c3e50;--text-color:#ecf0f1}*{margin:0;padding:0;box-sizing:border-box;user-select:none}body{font-family:Nunito,sans-serif;background-color:var(--bg-color);color:var(--text-color);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}h1{font-family:Fredoka,sans-serif;font-size:3rem;margin-bottom:20px}.game-board{position:relative;width:300px;height:300px;border-radius:50%;background:#333;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.5);outline:0}.buttons-container{width:100%;height:100%;position:relative;border-radius:50%;overflow:hidden;transform:rotate(45deg)}.simon-btn{position:absolute;width:50%;height:50%;cursor:pointer;opacity:.6;transition:opacity .1s}.simon-btn.active,.simon-btn:active{opacity:1;box-shadow:inset 0 0 20px rgba(0,0,0,.2)}.btn-green{top:0;left:0;background:#2ecc71;border-top-left-radius:150px}.btn-red{top:0;right:0;background:#e74c3c;border-top-right-radius:150px}.btn-yellow{bottom:0;left:0;background:#f1c40f;border-bottom-left-radius:150px}.btn-blue{bottom:0;right:0;background:#3498db;border-bottom-right-radius:150px}.center-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;background:#2c3e50;border-radius:50%;display:flex;flex-direction:column;justify-content:center;align-items:center;border:10px solid #333;z-index:10}.level-display{font-family:Fredoka,sans-serif;font-size:2.5rem;font-weight:700}.status-text{font-size:.8rem;text-transform:uppercase;margin-top:5px;color:#95a5a6}.controls-hint{margin-top:30px;text-align:center;color:#95a5a6}.key-hint{display:inline-block;background:#34495e;padding:2px 8px;border-radius:4px;margin:0 2px;font-weight:700;color:#fff}.back-btn{margin-top:30px;color:var(--text-color);text-decoration:none;font-weight:700;opacity:.8;transition:opacity .2s;padding:10px 20px;border-radius:20px;background:rgba(0,0,0,.2)}.back-btn:focus,.back-btn:hover{opacity:1;background:rgba(0,0,0,.4);outline:2px solid #e67e22}.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:100;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(3px)}.modal{background:#fff;padding:40px;border-radius:30px;text-align:center;color:#2c3e50;animation:popIn .3s}button{padding:15px 30px;border-radius:15px;border:none;font-family:Fredoka,sans-serif;font-size:1.2rem;cursor:pointer;background:#2ecc71;color:#fff;font-weight:700;margin-top:20px}button:focus,button:hover{transform:scale(1.05);outline:3px solid #2c3e50}@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}body.mode-tv{cursor:none}</style></head><body><h1>Simon Says</h1><div class="game-board" id="gameBoard" tabindex="0"><div class="buttons-container"><div class="simon-btn btn-green" id="green" data-key="4"></div><div class="simon-btn btn-red" id="red" data-key="2"></div><div class="simon-btn btn-yellow" id="yellow" data-key="8"></div><div class="simon-btn btn-blue" id="blue" data-key="6"></div></div><div class="center-circle"><div class="level-display" id="level">0</div><div class="status-text" id="status">Wait</div></div></div><div class="controls-hint"><p>Use Mouse or Keys:</p><p><span class="key-hint">2</span> Green <span class="key-hint">6</span> Red <span class="key-hint">8</span> Blue <span class="key-hint">4</span> Yellow</p></div><a href="index.html" class="back-btn">← Back to Menu</a><div class="modal-overlay" id="startModal"><div class="modal"><h2>Ready?</h2><button onclick="startGame()">Start Game</button></div></div><div class="modal-overlay" id="gameOverModal" style="display:none"><div class="modal"><h2>Game Over</h2><p>You reached Level <span id="finalLevel">0</span></p><button onclick="startGame()">Try Again</button></div></div><script>const urlParams=new URLSearchParams(window.location.search),mode=urlParams.get("mode");mode&&document.body.classList.add("mode-"+mode);const levelDisplay=document.getElementById("level"),statusDisplay=document.getElementById("status"),startModal=document.getElementById("startModal"),gameOverModal=document.getElementById("gameOverModal"),finalLevelSpan=document.getElementById("finalLevel"),gameBoard=document.getElementById("gameBoard"),buttons={green:document.getElementById("green"),red:document.getElementById("red"),yellow:document.getElementById("yellow"),blue:document.getElementById("blue")},colors=["green","red","yellow","blue"];let sequence=[],playerSequence=[],level=0,gameActive=!1,isPlayerTurn=!1;const SoundManager={ctx:null,init:function(){this.ctx||(this.ctx=new(window.AudioContext||window.webkitAudioContext))},playTone:function(e,t,n){this.ctx||this.init(),"suspended"===this.ctx.state&&this.ctx.resume();const a=this.ctx.createOscillator(),o=this.ctx.createGain();a.type=t,a.frequency.setValueAtTime(e,this.ctx.currentTime),o.gain.setValueAtTime(.1,this.ctx.currentTime),o.gain.exponentialRampToValueAtTime(.01,this.ctx.currentTime+n),a.connect(o),o.connect(this.ctx.destination),a.start(),a.stop(this.ctx.currentTime+n)},green:function(){this.playTone(300,"sine",.3)},red:function(){this.playTone(400,"sine",.3)},yellow:function(){this.playTone(500,"sine",.3)},blue:function(){this.playTone(600,"sine",.3)},error:function(){this.playTone(150,"sawtooth",.5)}};function startGame(){startModal.style.display="none",gameOverModal.style.display="none",sequence=[],level=0,gameActive=!0,gameBoard.focus(),nextLevel()}function nextLevel(){level++,levelDisplay.textContent=level,statusDisplay.textContent="Watch",playerSequence=[];const e=colors[Math.floor(4*Math.random())];sequence.push(e),isPlayerTurn=!1,playSequence()}async function playSequence(){await new Promise(e=>setTimeout(e,800));for(let e of sequence)activateButton(e),await new Promise(e=>setTimeout(e,600));isPlayerTurn=!0,statusDisplay.textContent="Your Turn"}function activateButton(e){const t=buttons[e];t.classList.add("active"),SoundManager[e](),setTimeout(()=>t.classList.remove("active"),300)}function handleInput(e){if(!gameActive||!isPlayerTurn)return;activateButton(e),playerSequence.push(e);const t=playerSequence.length-1;playerSequence[t]===sequence[t]?playerSequence.length===sequence.length&&(isPlayerTurn=!1,statusDisplay.textContent="Good!",setTimeout(nextLevel,500)):gameOver()}function gameOver(){gameActive=!1,SoundManager.error(),finalLevelSpan.textContent=level,gameOverModal.style.display="flex",setTimeout(()=>gameOverModal.querySelector("button").focus(),100)}Object.keys(buttons).forEach(e=>{buttons[e].addEventListener("mousedown",()=>handleInput(e)),buttons[e].addEventListener("touchstart",t=>{t.preventDefault(),handleInput(e)})}),document.addEventListener("keydown",e=>{const t=e.key,n=e.keyCode;let a=!1;if("Backspace"!==t&&"Escape"!==t&&8!==n&&27!==n&&461!==n&&10009!==n&&4!==n||(window.location.href="index.html",a=!0),(["Enter"," ","5"].includes(t)||13===n||23===n)&&("none"!==startModal.style.display||"none"!==gameOverModal.style.display)){const e=document.activeElement;e&&"BUTTON"===e.tagName?e.click():startGame(),a=!0}gameActive&&isPlayerTurn?((["4","ArrowLeft"].includes(t)||37===n||21===n)&&(handleInput("yellow"),a=!0),(["2","ArrowUp"].includes(t)||38===n||19===n)&&(handleInput("green"),a=!0),(["8","ArrowDown"].includes(t)||40===n||20===n)&&(handleInput("blue"),a=!0),(["6","ArrowRight"].includes(t)||39===n||22===n)&&(handleInput("red"),a=!0),a&&(e.preventDefault(),e.stopPropagation())):a&&(e.preventDefault(),e.stopPropagation())}),window.onload=()=>{if("none"!==startModal.style.display){const e=startModal.querySelector("button");e&&e.focus()}else gameBoard.focus()},gameBoard.addEventListener("blur",()=>{gameActive&&"none"===startModal.style.display&&setTimeout(()=>gameBoard.focus(),50)})</script><script src="global.js"></script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>Simon Says | Man Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --text-color: #ecf0f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .game-board {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: #333;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            outline: none;
+            /* Remove focus outline */
+        }
+
+        .buttons-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            transform: rotate(45deg);
+        }
+
+        .simon-btn {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.1s;
+        }
+
+        .simon-btn:active,
+        .simon-btn.active {
+            opacity: 1;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-green {
+            top: 0;
+            left: 0;
+            background: #2ecc71;
+            border-top-left-radius: 150px;
+        }
+
+        .btn-red {
+            top: 0;
+            right: 0;
+            background: #e74c3c;
+            border-top-right-radius: 150px;
+        }
+
+        .btn-yellow {
+            bottom: 0;
+            left: 0;
+            background: #f1c40f;
+            border-bottom-left-radius: 150px;
+        }
+
+        .btn-blue {
+            bottom: 0;
+            right: 0;
+            background: #3498db;
+            border-bottom-right-radius: 150px;
+        }
+
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 10px solid #333;
+            z-index: 10;
+        }
+
+        .level-display {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .status-text {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-top: 5px;
+            color: #95a5a6;
+        }
+
+        .controls-hint {
+            margin-top: 30px;
+            text-align: center;
+            color: #95a5a6;
+        }
+
+        .key-hint {
+            display: inline-block;
+            background: #34495e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .back-btn {
+            margin-top: 30px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn:hover,
+        .back-btn:focus {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.4);
+            outline: 2px solid #e67e22;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            color: #2c3e50;
+            animation: popIn 0.3s;
+        }
+
+        button {
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: none;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: #2ecc71;
+            color: white;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        button:hover,
+        button:focus {
+            transform: scale(1.05);
+            outline: 3px solid #2c3e50;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* TV Mode */
+        body.mode-tv {
+            cursor: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Simon Says</h1>
+
+    <div class="game-board" id="gameBoard" tabindex="0">
+        <div class="buttons-container">
+            <div class="simon-btn btn-green" id="green" data-key="4"></div>
+            <div class="simon-btn btn-red" id="red" data-key="2"></div>
+            <div class="simon-btn btn-yellow" id="yellow" data-key="8"></div>
+            <div class="simon-btn btn-blue" id="blue" data-key="6"></div>
+        </div>
+        <div class="center-circle">
+            <div class="level-display" id="level">0</div>
+            <div class="status-text" id="status">Wait</div>
+        </div>
+    </div>
+
+    <div class="controls-hint">
+        <p>Use Mouse or Keys:</p>
+        <p>
+            <span class="key-hint">2</span> Green
+            <span class="key-hint">6</span> Red
+            <span class="key-hint">8</span> Blue
+            <span class="key-hint">4</span> Yellow
+        </p>
+    </div>
+
+    <a href="index.html" class="back-btn">← Back to Menu</a>
+
+    <div class="modal-overlay" id="startModal">
+        <div class="modal">
+            <h2>Ready?</h2>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="gameOverModal" style="display: none;">
+        <div class="modal">
+            <h2>Game Over</h2>
+            <p>You reached Level <span id="finalLevel">0</span></p>
+            <button onclick="startGame()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Check URL params for mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        if (mode) {
+            document.body.classList.add('mode-' + mode);
+        }
+
+        const levelDisplay = document.getElementById('level');
+        const statusDisplay = document.getElementById('status');
+        const startModal = document.getElementById('startModal');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalLevelSpan = document.getElementById('finalLevel');
+        const gameBoard = document.getElementById('gameBoard');
+
+        const buttons = {
+            green: document.getElementById('green'),
+            red: document.getElementById('red'),
+            yellow: document.getElementById('yellow'),
+            blue: document.getElementById('blue')
+        };
+
+        const colors = ['green', 'red', 'yellow', 'blue'];
+        let sequence = [];
+        let playerSequence = [];
+        let level = 0;
+        let gameActive = false;
+        let isPlayerTurn = false;
+
+        // Sound Manager
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone: function (freq, type, duration) {
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            green: function () { this.playTone(300, 'sine', 0.3); },
+            red: function () { this.playTone(400, 'sine', 0.3); },
+            yellow: function () { this.playTone(500, 'sine', 0.3); },
+            blue: function () { this.playTone(600, 'sine', 0.3); },
+            error: function () { this.playTone(150, 'sawtooth', 0.5); }
+        };
+
+        function startGame() {
+            startModal.style.display = 'none';
+            gameOverModal.style.display = 'none';
+            sequence = [];
+            level = 0;
+            gameActive = true;
+            gameBoard.focus();
+            nextLevel();
+        }
+
+        function nextLevel() {
+            level++;
+            levelDisplay.textContent = level;
+            statusDisplay.textContent = "Watch";
+            playerSequence = [];
+
+            const randomColor = colors[Math.floor(Math.random() * 4)];
+            sequence.push(randomColor);
+
+            isPlayerTurn = false;
+            playSequence();
+        }
+
+        async function playSequence() {
+            await new Promise(r => setTimeout(r, 800));
+
+            for (let color of sequence) {
+                activateButton(color);
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            isPlayerTurn = true;
+            statusDisplay.textContent = "Your Turn";
+        }
+
+        function activateButton(color) {
+            const btn = buttons[color];
+            btn.classList.add('active');
+            SoundManager[color]();
+            setTimeout(() => btn.classList.remove('active'), 300);
+        }
+
+        function handleInput(color) {
+            if (!gameActive || !isPlayerTurn) return;
+
+            activateButton(color);
+            playerSequence.push(color);
+
+            // Check correctness
+            const index = playerSequence.length - 1;
+            if (playerSequence[index] !== sequence[index]) {
+                gameOver();
+                return;
+            }
+
+            if (playerSequence.length === sequence.length) {
+                isPlayerTurn = false;
+                statusDisplay.textContent = "Good!";
+                setTimeout(nextLevel, 500);
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            SoundManager.error();
+            finalLevelSpan.textContent = level;
+            gameOverModal.style.display = 'flex';
+            setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
+        }
+
+        // Click Listeners
+        Object.keys(buttons).forEach(color => {
+            buttons[color].addEventListener('mousedown', () => handleInput(color));
+            buttons[color].addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleInput(color);
+            });
+        });
+
+        // Keyboard Listeners
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37;
+            const TV_UP = 38;
+            const TV_RIGHT = 39;
+            const TV_DOWN = 40;
+            const TV_ENTER = 13;
+
+            // Alternate TV Keys
+            const ALT_LEFT = 21;
+            const ALT_RIGHT = 22;
+            const ALT_UP = 19;
+            const ALT_DOWN = 20;
+            const ALT_ENTER = 23;
+            const ALT_BACK = 4;
+            const TIZEN_BACK = 10009;
+
+            let handled = false;
+
+            // Handle Back Button
+            if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
+                window.location.href = 'index.html';
+                handled = true;
+            }
+
+            if (['Enter', ' ', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
+                if (startModal.style.display !== 'none' || gameOverModal.style.display !== 'none') {
+                    const focusedBtn = document.activeElement;
+                    if (focusedBtn && focusedBtn.tagName === 'BUTTON') {
+                        focusedBtn.click();
+                    } else {
+                        startGame();
+                    }
+                    handled = true;
+                }
+            }
+
+            if (!gameActive || !isPlayerTurn) {
+                if (handled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                return;
+            }
+
+            if (['4', 'ArrowLeft'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT) {
+                handleInput('yellow');
+                handled = true;
+            }
+            if (['2', 'ArrowUp'].includes(key) || keyCode === TV_UP || keyCode === ALT_UP) {
+                handleInput('green');
+                handled = true;
+            }
+            if (['8', 'ArrowDown'].includes(key) || keyCode === TV_DOWN || keyCode === ALT_DOWN) {
+                handleInput('blue');
+                handled = true;
+            }
+            if (['6', 'ArrowRight'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT) {
+                handleInput('red');
+                handled = true;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // Focus Start on load
+        window.onload = () => {
+            if (startModal.style.display !== 'none') {
+                const btn = startModal.querySelector('button');
+                if (btn) btn.focus();
+            } else {
+                gameBoard.focus();
+            }
+        };
+
+        // Keep focus
+        gameBoard.addEventListener('blur', () => {
+            if (gameActive && startModal.style.display === 'none') {
+                setTimeout(() => gameBoard.focus(), 50);
+            }
+        });
+
+    </script>
+    <script src="global.js"></script>
+</body>
+
+</html>

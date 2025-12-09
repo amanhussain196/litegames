@@ -1,1 +1,409 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Join the Fun! | litegames.fun</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>:root{--bg-color:#E0F7FA;--card-bg:#ffffff;--primary:#FF6B6B;--secondary:#4ECDC4;--accent:#FFE66D;--text-main:#2D3436;--text-muted:#636e72;--shadow:0 10px 20px rgba(0, 0, 0, 0.1);--border-radius:25px}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Nunito,sans-serif;background-color:var(--bg-color);color:var(--text-main);min-height:100vh;display:flex;justify-content:center;align-items:center;background-image:radial-gradient(#4ecdc4 1px,transparent 1px);background-size:30px 30px;padding:20px}.btn-submit,.logo,h1,h2,h3{font-family:Fredoka,sans-serif}.auth-container{background:var(--card-bg);width:100%;max-width:450px;border-radius:40px;box-shadow:0 20px 60px rgba(0,0,0,.1);overflow:hidden;border:5px solid #fff;position:relative;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275)}@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}.auth-header{text-align:center;padding:2rem 2rem 1rem}.logo{font-size:2rem;font-weight:700;color:var(--primary);text-shadow:2px 2px 0 var(--accent);text-decoration:none;display:inline-block;margin-bottom:1rem}.tabs{display:flex;padding:0 2rem;gap:1rem;margin-bottom:2rem}.tab-btn{flex:1;padding:10px;border:none;background:0 0;font-family:Fredoka,sans-serif;font-size:1.2rem;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .3s}.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}.forms-wrapper{padding:0 2rem 2rem;position:relative;overflow:hidden}.form-content{display:none;animation:fadeIn .3s ease}.form-content.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.input-group{margin-bottom:1.2rem}.input-group label{display:block;margin-bottom:.5rem;font-weight:700;color:var(--text-muted);font-size:.9rem}.input-group input{width:100%;padding:12px 20px;border:2px solid #eee;border-radius:15px;font-family:Nunito,sans-serif;font-size:1rem;transition:all .3s;background:#f9f9f9}.input-group input:focus{outline:0;border-color:var(--secondary);background:#fff;box-shadow:0 0 0 4px rgba(78,205,196,.2)}.btn-submit{width:100%;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:50px;font-size:1.2rem;font-weight:600;cursor:pointer;box-shadow:0 4px 0 #d64545;transition:all .2s;margin-top:1rem}.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 0 #d64545}.btn-submit:active{transform:translateY(2px);box-shadow:0 2px 0 #d64545}.back-link{display:block;text-align:center;margin-top:1.5rem;color:var(--text-muted);text-decoration:none;font-weight:700;font-size:.9rem}.back-link:hover{color:var(--primary)}.feedback-msg{font-size:.8rem;margin-top:5px;font-weight:600;min-height:1.2em}.feedback-msg.success{color:#2ecc71}.feedback-msg.error{color:#e74c3c}body.mode-tv{cursor:none}body.mode-tv .auth-container{transform:scale(1.1)}body.mode-tv button:focus,body.mode-tv input:focus{outline:4px solid var(--accent);transform:scale(1.02)}</style></head><body><div class="auth-container"><div class="auth-header"><a href="index.html" class="logo">litegames.fun</a><p style="color:var(--text-muted);font-weight:600">Welcome back, player!</p></div><div class="tabs"><button class="tab-btn active" onclick='switchTab("signin")'>Sign In</button> <button class="tab-btn" onclick='switchTab("signup")'>Sign Up</button></div><div class="forms-wrapper"><div id="signin-form" class="form-content active"><form onsubmit="handleLogin(event)"><div class="input-group"><label>Username or Email</label> <input type="text" id="signin-id" placeholder="Enter username or email" required></div><div class="input-group"><label>Password</label> <input type="password" id="signin-password" placeholder="Enter your password" required></div><button type="submit" class="btn-submit">LET'S PLAY!</button></form></div><div id="signup-form" class="form-content"><form onsubmit="handleSignup(event)"><div class="input-group"><label>Username</label> <input type="text" id="signup-username" placeholder="Choose a cool name" required><div id="username-feedback" class="feedback-msg"></div></div><div class="input-group"><label>Email</label> <input type="email" id="signup-email" placeholder="your@email.com" required><div id="email-feedback" class="feedback-msg"></div></div><div class="input-group"><label>Password</label> <input type="password" id="signup-password" placeholder="Create a password (min 6 chars)" minlength="6" required></div><button type="submit" class="btn-submit">CREATE ACCOUNT</button></form></div><a href="index.html" class="back-link">← Back to Games</a></div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js"></script><script src="global.js"></script><script>function switchTab(e){document.querySelectorAll(".tab-btn").forEach(e=>e.classList.remove("active")),event.target.classList.add("active"),document.querySelectorAll(".form-content").forEach(e=>e.classList.remove("active")),document.getElementById(e+"-form").classList.add("active")}const usernameInput=document.getElementById("signup-username"),usernameFeedback=document.getElementById("username-feedback");usernameInput.addEventListener("input",debounce(async e=>{const t=e.target.value;if(t.length<4)return usernameFeedback.textContent="Must be at least 4 chars",void(usernameFeedback.className="feedback-msg error");usernameFeedback.textContent="Checking...",usernameFeedback.className="feedback-msg";const n=await AuthManager.checkUsername(t);usernameFeedback.textContent=n.message,usernameFeedback.className=n.available?"feedback-msg success":"feedback-msg error"},500));const emailInput=document.getElementById("signup-email"),emailFeedback=document.getElementById("email-feedback");async function handleSignup(e){e.preventDefault();const t=e.target.querySelector("button"),n=t.textContent;t.textContent="Creating Account...",t.disabled=!0;const a=usernameInput.value,s=emailInput.value,c=document.getElementById("signup-password").value,u=await AuthManager.signUp(a,s,c);u.success?(t.textContent="Success!",setTimeout(()=>window.location.href="index.html",1e3)):(alert("Signup Failed: "+u.message),t.textContent=n,t.disabled=!1)}async function handleLogin(e){e.preventDefault();const t=e.target.querySelector("button"),n=t.textContent;t.textContent="Signing In...",t.disabled=!0;const a=document.getElementById("signin-id").value,s=document.getElementById("signin-password").value,c=await AuthManager.signIn(a,s);c.success?(t.textContent="Welcome Back!",setTimeout(()=>window.location.href="index.html",1e3)):(alert("Login Failed: "+c.message),t.textContent=n,t.disabled=!1)}function debounce(e,t){let n;return function(...a){clearTimeout(n),n=setTimeout(()=>{clearTimeout(n),e(...a)},t)}}emailInput.addEventListener("input",debounce(async e=>{const t=e.target.value;if(!t.includes("@"))return;const n=await AuthManager.checkEmail(t);emailFeedback.textContent=n.message,emailFeedback.className=n.available?"feedback-msg success":"feedback-msg error"},500))</script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>Join the Fun! | litegames.fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #E0F7FA;
+            --card-bg: #ffffff;
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 25px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(#4ECDC4 1px, transparent 1px);
+            background-size: 30px 30px;
+            padding: 20px;
+        }
+
+        h1,
+        h2,
+        h3,
+        .logo,
+        .btn-submit {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .auth-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 5px solid white;
+            position: relative;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            padding: 2rem 2rem 1rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 2px 2px 0px var(--accent);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            padding: 0 2rem;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .forms-wrapper {
+            padding: 0 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.2);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d64545;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #d64545;
+        }
+
+        .btn-submit:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #d64545;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        .feedback-msg {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: 600;
+            min-height: 1.2em;
+        }
+
+        .feedback-msg.success {
+            color: #2ecc71;
+        }
+
+        .feedback-msg.error {
+            color: #e74c3c;
+        }
+
+        /* TV Mode */
+        body.mode-tv {
+            cursor: none;
+        }
+
+        body.mode-tv .auth-container {
+            transform: scale(1.1);
+        }
+
+        body.mode-tv input:focus,
+        body.mode-tv button:focus {
+            outline: 4px solid var(--accent);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <a href="index.html" class="logo">litegames.fun</a>
+            <p style="color: var(--text-muted); font-weight: 600;">Welcome back, player!</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('signin')">Sign In</button>
+            <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+        </div>
+
+        <div class="forms-wrapper">
+            <!-- Sign In Form -->
+            <div id="signin-form" class="form-content active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>Username or Email</label>
+                        <input type="text" id="signin-id" placeholder="Enter username or email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="signin-password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn-submit">LET'S PLAY!</button>
+                </form>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="form-content">
+                <form onsubmit="handleSignup(event)">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="signup-username" placeholder="Choose a cool name" required>
+                        <div id="username-feedback" class="feedback-msg"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="signup-email" placeholder="your@email.com" required>
+                        <div id="email-feedback" class="feedback-msg"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="signup-password" placeholder="Create a password (min 6 chars)"
+                            minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn-submit">CREATE ACCOUNT</button>
+                </form>
+            </div>
+
+            <a href="index.html" class="back-link">← Back to Games</a>
+        </div>
+    </div>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="global.js"></script>
+    <script>
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
+            document.getElementById(tab + '-form').classList.add('active');
+        }
+
+        // Live Validation: Username
+        const usernameInput = document.getElementById('signup-username');
+        const usernameFeedback = document.getElementById('username-feedback');
+
+        usernameInput.addEventListener('input', debounce(async (e) => {
+            const val = e.target.value;
+            if (val.length < 4) {
+                usernameFeedback.textContent = 'Must be at least 4 chars';
+                usernameFeedback.className = 'feedback-msg error';
+                return;
+            }
+
+            usernameFeedback.textContent = 'Checking...';
+            usernameFeedback.className = 'feedback-msg';
+
+            const result = await AuthManager.checkUsername(val);
+            usernameFeedback.textContent = result.message;
+            usernameFeedback.className = result.available ? 'feedback-msg success' : 'feedback-msg error';
+        }, 500));
+
+        // Live Validation: Email
+        const emailInput = document.getElementById('signup-email');
+        const emailFeedback = document.getElementById('email-feedback');
+
+        emailInput.addEventListener('input', debounce(async (e) => {
+            const val = e.target.value;
+            if (!val.includes('@')) return;
+
+            const result = await AuthManager.checkEmail(val);
+            emailFeedback.textContent = result.message;
+            emailFeedback.className = result.available ? 'feedback-msg success' : 'feedback-msg error';
+        }, 500));
+
+        // Sign Up Handler
+        async function handleSignup(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.textContent = 'Creating Account...';
+            btn.disabled = true;
+
+            const username = usernameInput.value;
+            const email = emailInput.value;
+            const password = document.getElementById('signup-password').value;
+
+            const result = await AuthManager.signUp(username, email, password);
+
+            if (result.success) {
+                btn.textContent = 'Success!';
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            } else {
+                alert('Signup Failed: ' + result.message);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Sign In Handler
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.textContent = 'Signing In...';
+            btn.disabled = true;
+
+            const loginId = document.getElementById('signin-id').value;
+            const password = document.getElementById('signin-password').value;
+
+            const result = await AuthManager.signIn(loginId, password);
+
+            if (result.success) {
+                btn.textContent = 'Welcome Back!';
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            } else {
+                alert('Login Failed: ' + result.message);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Utility: Debounce
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

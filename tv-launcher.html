@@ -1,1 +1,473 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LiteGames TV | Game Hub</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><style>:root{--bg-dark:#0f0f0f;--bg-card:#1e1e1e;--accent:#E50914;--focus-border:#ffffff;--text-main:#ffffff;--text-muted:#a3a3a3}*{margin:0;padding:0;box-sizing:border-box;user-select:none}body{background-color:var(--bg-dark);color:var(--text-main);font-family:Outfit,sans-serif;overflow:hidden;height:100vh;width:100vw;display:flex;flex-direction:column}.ambient-bg{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 80% 20%,rgba(229,9,20,.15),transparent 40%),radial-gradient(circle at 20% 80%,rgba(40,40,255,.1),transparent 40%);z-index:-1}header{padding:2rem 4rem;display:flex;align-items:center;justify-content:space-between;z-index:10}.logo{font-size:2.5rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:2px;text-shadow:0 0 20px rgba(229,9,20,.5)}.logo span{color:#fff}.clock{font-size:1.5rem;color:var(--text-muted);font-weight:600}main{flex:1;display:flex;flex-direction:column;padding:0 4rem 4rem;overflow-y:auto;scrollbar-width:none}main::-webkit-scrollbar{display:none}.hero-banner{margin-bottom:3rem;padding:3rem;background:linear-gradient(90deg,#222,#111);border-radius:20px;display:flex;align-items:center;gap:3rem;border:2px solid transparent;transition:transform .3s,border-color .3s}.hero-banner.focused{border-color:var(--focus-border);transform:scale(1.02);box-shadow:0 10px 40px rgba(0,0,0,.5)}.hero-text h1{font-size:3rem;margin-bottom:1rem}.hero-text p{font-size:1.2rem;color:var(--text-muted);max-width:600px}.category-title{font-size:1.5rem;margin-bottom:1.5rem;color:var(--text-muted);font-weight:600;padding-left:10px;border-left:4px solid var(--accent)}.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:2rem;padding-bottom:2rem}.game-card{background:var(--bg-card);border-radius:15px;overflow:hidden;position:relative;aspect-ratio:16/9;transition:transform .2s cubic-bezier(.25, .46, .45, .94),box-shadow .2s,outline .1s;border:3px solid transparent;cursor:pointer}.game-card img{width:100%;height:100%;object-fit:cover;opacity:.8;transition:opacity .3s}.game-card .card-overlay{position:absolute;bottom:0;left:0;width:100%;padding:1rem;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);transform:translateY(100%);transition:transform .3s}.game-card h3{font-size:1.2rem;font-weight:600}.game-card.focused,.game-card:focus{transform:scale(1.1);z-index:10;border-color:var(--focus-border);box-shadow:0 20px 50px rgba(0,0,0,.6);outline:0}.game-card.focused img,.game-card:focus img{opacity:1}.game-card.focused .card-overlay,.game-card:focus .card-overlay{transform:translateY(0)}.loader{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-dark);display:flex;justify-content:center;align-items:center;z-index:1000;transition:opacity .5s}.spinner{width:50px;height:50px;border:5px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div class="ambient-bg"></div><div class="loader" id="loader"><div class="spinner"></div></div><header><div class="logo">Lite<span>Games</span> TV</div><div class="clock" id="clock">12:00</div></header><main id="mainContainer"><div class="hero-banner" id="heroBanner" tabindex="0" onclick='launchGame("spaceblaster.html")'><div style="font-size:5rem">🚀</div><div class="hero-text"><h1>Space Blaster</h1><p>Defend the galaxy in this high-octane arcade shooter. Now optimized for your TV remote!</p></div></div><div class="category-title">All Games</div><div class="games-grid" id="gamesGrid"></div></main><script>const games=[{title:"Super Snake",url:"snake.html",img:"assets/snake.svg",color:"#4CAF50"},{title:"Brick Breaker",url:"brickbreaker.html",img:"assets/brickbreaker.svg",color:"#FF5252"},{title:"Go Kart Go!",url:"gokartgo.html",img:"assets/racing.svg",color:"#FFC107"},{title:"Space Blaster",url:"spaceblaster.html",img:"assets/shooter.svg",color:"#2196F3"},{title:"Mind Bender",url:"mindbender.html",img:"assets/puzzle.svg",color:"#9C27B0"},{title:"Chess Master",url:"chess.html",img:"assets/chess.svg",color:"#607D8B"},{title:"Tic Tac Toe",url:"tictactoe.html",img:"assets/tictactoe.svg",color:"#00BCD4"},{title:"Flappy Bird",url:"flappybird.html",img:"assets/flappybird.svg",color:"#FF9800"},{title:"Tower Stack",url:"tower.html",img:"assets/tower.svg",color:"#3F51B5"},{title:"2048",url:"2048.html",img:"assets/2048.svg",color:"#8BC34A"},{title:"Simon Says",url:"simon.html",img:"assets/simon.svg",color:"#E91E63"},{title:"Ping Pong",url:"pingpong.html",img:"assets/pingpong.svg",color:"#009688"},{title:"Whack-a-Mole",url:"whackamole.html",img:"assets/whackamole.svg",color:"#795548"},{title:"Connect Four",url:"connectfour.html",img:"assets/connectfour.svg",color:"#F44336"}],grid=document.getElementById("gamesGrid"),loader=document.getElementById("loader");function updateClock(){const e=new Date;document.getElementById("clock").textContent=e.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}function launchGame(e){playSelectSound(),setTimeout(()=>{window.location.href=e+"?mode=tv"},200)}games.forEach(e=>{const t=document.createElement("div");t.className="game-card",t.tabIndex=0,t.onclick=()=>launchGame(e.url),t.innerHTML=`\n                <div style="width:100%; height:100%; background:${e.color}; display:flex; justify-content:center; align-items:center;">\n                    <img src="${e.img}" onerror="this.style.display='none'; this.parentElement.innerText='${e.title[0]}'" style="width:60%; height:60%; object-fit:contain;">\n                </div>\n                <div class="card-overlay">\n                    <h3>${e.title}</h3>\n                </div>\n            `,grid.appendChild(t)}),setInterval(updateClock,1e3),updateClock(),window.onload=()=>{setTimeout(()=>{loader.style.opacity="0",setTimeout(()=>loader.remove(),500),document.getElementById("heroBanner").focus()},500)};const AudioContext=window.AudioContext||window.webkitAudioContext,ctx=new AudioContext;function playFocusSound(){"suspended"===ctx.state&&ctx.resume();const e=ctx.createOscillator(),t=ctx.createGain();e.frequency.setValueAtTime(200,ctx.currentTime),e.frequency.exponentialRampToValueAtTime(300,ctx.currentTime+.1),t.gain.setValueAtTime(.05,ctx.currentTime),t.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.1),e.connect(t),t.connect(ctx.destination),e.start(),e.stop(ctx.currentTime+.1)}function playSelectSound(){"suspended"===ctx.state&&ctx.resume();const e=ctx.createOscillator(),t=ctx.createGain();e.type="square",e.frequency.setValueAtTime(400,ctx.currentTime),e.frequency.exponentialRampToValueAtTime(600,ctx.currentTime+.1),t.gain.setValueAtTime(.05,ctx.currentTime),t.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2),e.connect(t),t.connect(ctx.destination),e.start(),e.stop(ctx.currentTime+.2)}document.addEventListener("keydown",e=>{const t=e.key,n=e.keyCode;let o=null;if(["ArrowUp","2","w","W"].includes(t)||38===n?o="UP":["ArrowDown","8","s","S"].includes(t)||40===n?o="DOWN":["ArrowLeft","4","a","A"].includes(t)||37===n?o="LEFT":["ArrowRight","6","d","D"].includes(t)||39===n?o="RIGHT":["Enter"," ","5"].includes(t)||13===n?o="SELECT":(["Backspace","Escape"].includes(t)||461===n||10009===n||4===n)&&(o="BACK"),!o)return;e.preventDefault();const i=document.activeElement;if("BACK"===o)return void(window.location.href="index.html");if("SELECT"===o)return void(i&&i.click&&i.click());const c=Array.from(document.querySelectorAll('[tabindex="0"]'));if(-1===c.indexOf(i))return void c[0].focus();let l=null;const r=i.getBoundingClientRect(),s=r.left+r.width/2,a=r.top+r.height/2;let u=1/0;c.forEach(e=>{if(e===i)return;const t=e.getBoundingClientRect(),n=t.left+t.width/2,c=t.top+t.height/2,m=n-s,d=c-a;let g=!1;if("RIGHT"===o&&m>0&&Math.abs(d)<r.height&&(g=!0),"LEFT"===o&&m<0&&Math.abs(d)<r.height&&(g=!0),"DOWN"===o&&d>0&&(g=!0),"UP"===o&&d<0&&(g=!0),g){let t=Math.sqrt(m*m+d*d);"UP"!==o&&"DOWN"!==o||(t+=.5*Math.abs(m)),"LEFT"!==o&&"RIGHT"!==o||(t+=2*Math.abs(d)),t<u&&(u=t,l=e)}}),l&&(l.focus(),l.scrollIntoView({behavior:"smooth",block:"center"}),playFocusSound())}),document.querySelectorAll('[tabindex="0"]').forEach(e=>{e.addEventListener("mouseenter",()=>{e.focus(),playFocusSound()})})</script><script src="global.js"></script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>LiteGames TV | Game Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --bg-card: #1e1e1e;
+            --accent: #E50914;
+            /* Netflix Red-ish */
+            --focus-border: #ffffff;
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            /* Prevent scrolling, use transform for navigation if needed */
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Background Ambient Effect */
+        .ambient-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 80% 20%, rgba(229, 9, 20, 0.15), transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(40, 40, 255, 0.1), transparent 40%);
+            z-index: -1;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+        }
+
+        .logo span {
+            color: white;
+        }
+
+        .clock {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 4rem 4rem;
+            overflow-y: auto;
+            /* Allow scrolling if grid is huge, but hide scrollbar */
+            scrollbar-width: none;
+        }
+
+        main::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hero-banner {
+            margin-bottom: 3rem;
+            padding: 3rem;
+            background: linear-gradient(90deg, #222, #111);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            border: 2px solid transparent;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .hero-banner.focused {
+            border-color: var(--focus-border);
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-text h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-text p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        /* Grid */
+        .category-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding-left: 10px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.2s,
+                outline 0.1s;
+            border: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .game-card .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .game-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Focus State */
+        .game-card:focus,
+        .game-card.focused {
+            transform: scale(1.1);
+            z-index: 10;
+            border-color: var(--focus-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            outline: none;
+        }
+
+        .game-card:focus img,
+        .game-card.focused img {
+            opacity: 1;
+        }
+
+        .game-card:focus .card-overlay,
+        .game-card.focused .card-overlay {
+            transform: translateY(0);
+        }
+
+        /* Loading Overlay */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="ambient-bg"></div>
+
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="logo">Lite<span>Games</span> TV</div>
+        <div class="clock" id="clock">12:00</div>
+    </header>
+
+    <main id="mainContainer">
+
+        <!-- Hero / Featured -->
+        <div class="hero-banner" id="heroBanner" tabindex="0" onclick="launchGame('spaceblaster.html')">
+            <div style="font-size: 5rem;">🚀</div>
+            <div class="hero-text">
+                <h1>Space Blaster</h1>
+                <p>Defend the galaxy in this high-octane arcade shooter. Now optimized for your TV remote!</p>
+            </div>
+        </div>
+
+        <div class="category-title">All Games</div>
+
+        <div class="games-grid" id="gamesGrid">
+            <!-- Cards injected by JS -->
+        </div>
+
+    </main>
+
+    <script>
+        // Game Data
+        const games = [
+            { title: "Super Snake", url: "snake.html", img: "assets/snake.svg", color: "#4CAF50" },
+            { title: "Brick Breaker", url: "brickbreaker.html", img: "assets/brickbreaker.svg", color: "#FF5252" },
+            { title: "Go Kart Go!", url: "gokartgo.html", img: "assets/racing.svg", color: "#FFC107" },
+            { title: "Space Blaster", url: "spaceblaster.html", img: "assets/shooter.svg", color: "#2196F3" },
+            { title: "Mind Bender", url: "mindbender.html", img: "assets/puzzle.svg", color: "#9C27B0" },
+            { title: "Chess Master", url: "chess.html", img: "assets/chess.svg", color: "#607D8B" },
+            { title: "Tic Tac Toe", url: "tictactoe.html", img: "assets/tictactoe.svg", color: "#00BCD4" },
+            { title: "Flappy Bird", url: "flappybird.html", img: "assets/flappybird.svg", color: "#FF9800" },
+            { title: "Tower Stack", url: "tower.html", img: "assets/tower.svg", color: "#3F51B5" },
+            { title: "2048", url: "2048.html", img: "assets/2048.svg", color: "#8BC34A" },
+            { title: "Simon Says", url: "simon.html", img: "assets/simon.svg", color: "#E91E63" },
+            { title: "Ping Pong", url: "pingpong.html", img: "assets/pingpong.svg", color: "#009688" },
+            { title: "Whack-a-Mole", url: "whackamole.html", img: "assets/whackamole.svg", color: "#795548" },
+            { title: "Connect Four", url: "connectfour.html", img: "assets/connectfour.svg", color: "#F44336" }
+        ];
+
+        const grid = document.getElementById('gamesGrid');
+        const loader = document.getElementById('loader');
+
+        // Render Grid
+        games.forEach(game => {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.tabIndex = 0;
+            card.onclick = () => launchGame(game.url);
+
+            // Placeholder for image if svg missing, using colored block
+            card.innerHTML = `
+                <div style="width:100%; height:100%; background:${game.color}; display:flex; justify-content:center; align-items:center;">
+                    <img src="${game.img}" onerror="this.style.display='none'; this.parentElement.innerText='${game.title[0]}'" style="width:60%; height:60%; object-fit:contain;">
+                </div>
+                <div class="card-overlay">
+                    <h3>${game.title}</h3>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        });
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Remove Loader
+        window.onload = () => {
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+                document.getElementById('heroBanner').focus();
+            }, 500);
+        };
+
+        // Launch Game
+        function launchGame(url) {
+            // Add sound effect here if needed
+            playSelectSound();
+            setTimeout(() => {
+                window.location.href = url + '?mode=tv';
+            }, 200);
+        }
+
+        // Sound Effects
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+
+        function playFocusSound() {
+            if (ctx.state === 'suspended') ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(200, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        }
+
+        function playSelectSound() {
+            if (ctx.state === 'suspended') ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.2);
+        }
+
+        // Navigation Logic
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // TV Keys
+            const TV_LEFT = 37;
+            const TV_UP = 38;
+            const TV_RIGHT = 39;
+            const TV_DOWN = 40;
+            const TV_ENTER = 13;
+            const TV_BACK = 461; // LG WebOS Back
+            const TIZEN_BACK = 10009; // Samsung Tizen Back
+            const ANDROID_BACK = 4;
+
+            let action = null;
+
+            if (['ArrowUp', '2', 'w', 'W'].includes(key) || keyCode === TV_UP) action = 'UP';
+            else if (['ArrowDown', '8', 's', 'S'].includes(key) || keyCode === TV_DOWN) action = 'DOWN';
+            else if (['ArrowLeft', '4', 'a', 'A'].includes(key) || keyCode === TV_LEFT) action = 'LEFT';
+            else if (['ArrowRight', '6', 'd', 'D'].includes(key) || keyCode === TV_RIGHT) action = 'RIGHT';
+            else if (['Enter', ' ', '5'].includes(key) || keyCode === TV_ENTER) action = 'SELECT';
+            else if (['Backspace', 'Escape'].includes(key) || keyCode === TV_BACK || keyCode === TIZEN_BACK || keyCode === ANDROID_BACK) action = 'BACK';
+
+            if (!action) return;
+            e.preventDefault();
+
+            const active = document.activeElement;
+
+            if (action === 'BACK') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            if (action === 'SELECT') {
+                if (active && active.click) active.click();
+                return;
+            }
+
+            // Spatial Navigation
+            const focusables = Array.from(document.querySelectorAll('[tabindex="0"]'));
+            const index = focusables.indexOf(active);
+
+            if (index === -1) {
+                focusables[0].focus();
+                return;
+            }
+
+            let next = null;
+
+            // Simple grid logic assumption (since we use CSS grid)
+            // We can use getBoundingClientRect for true spatial, or just assume order
+            // Let's use spatial for robustness
+
+            const rect = active.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            let bestDist = Infinity;
+
+            focusables.forEach(el => {
+                if (el === active) return;
+
+                const r = el.getBoundingClientRect();
+                const ex = r.left + r.width / 2;
+                const ey = r.top + r.height / 2;
+
+                const dx = ex - cx;
+                const dy = ey - cy;
+
+                let valid = false;
+
+                if (action === 'RIGHT' && dx > 0 && Math.abs(dy) < rect.height) valid = true;
+                if (action === 'LEFT' && dx < 0 && Math.abs(dy) < rect.height) valid = true;
+                if (action === 'DOWN' && dy > 0) valid = true; // Relaxed X check for down
+                if (action === 'UP' && dy < 0) valid = true;   // Relaxed X check for up
+
+                if (valid) {
+                    // Weight distance: prioritize primary axis
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (action === 'UP' || action === 'DOWN') dist += Math.abs(dx) * 0.5;
+                    if (action === 'LEFT' || action === 'RIGHT') dist += Math.abs(dy) * 2;
+
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        next = el;
+                    }
+                }
+            });
+
+            if (next) {
+                next.focus();
+                next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                playFocusSound();
+            }
+        });
+
+        // Add focus listener for sound on mouse hover too
+        document.querySelectorAll('[tabindex="0"]').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                el.focus();
+                playFocusSound();
+            });
+        });
+
+    </script>
+    <script src="global.js"></script>
+</body>
+
+</html>

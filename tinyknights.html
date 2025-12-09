@@ -1,1 +1,1520 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Tiny Knights | Man Games</title><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet"><style>:root{--primary:#5D9CEC;--accent:#FFCE54;--bg:#E0F7FA;--text:#2D3436;--enemy:#ED5565;--grass:#A0D468}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Fredoka,sans-serif;background-color:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background-image:radial-gradient(#5d9cec 1px,transparent 1px);background-size:30px 30px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}#gameWrapper{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;height:100vh;overflow-y:auto;padding-top:20px}#gameWrapper:fullscreen{background:var(--bg);padding:10px;justify-content:center}.game-container{position:relative;background:#fff;padding:5px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.1);border:5px solid #fff;outline:0}#gameWrapper:fullscreen .game-container{box-shadow:none;border:none;background:0 0;padding:0;max-height:80vh;display:flex;justify-content:center;align-items:center;width:100%}canvas{background:var(--grass);border-radius:10px;display:block;box-shadow:inset 0 0 20px rgba(0,0,0,.2);cursor:crosshair}#gameWrapper:fullscreen canvas{max-height:100%;width:auto;max-width:100%}.ui-panel{display:flex;justify-content:space-between;width:100%;max-width:600px;margin-bottom:.5rem;padding:0 5px;align-items:center}.score-box{background:#fff;padding:4px 12px;border-radius:15px;font-size:.9rem;font-weight:700;box-shadow:0 5px 15px rgba(0,0,0,.05);display:flex;align-items:center;gap:5px}.wave-bar-container{width:100%;max-width:600px;height:10px;background:rgba(0,0,0,.1);border-radius:5px;margin-bottom:10px;overflow:hidden}.wave-bar-fill{height:100%;background:var(--enemy);width:0%;transition:width .3s}.mobile-controls{display:none;justify-content:space-between;width:100%;padding:20px 40px;position:absolute;bottom:20px;left:0;pointer-events:none;z-index:20}#gameWrapper:fullscreen .mobile-controls,body.mode-mobile .mobile-controls{display:flex}.joystick-zone{width:120px;height:120px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);border-radius:50%;position:relative;pointer-events:auto;backdrop-filter:blur(5px)}.joystick-knob{width:50px;height:50px;background:rgba(255,255,255,.8);border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 10px rgba(0,0,0,.2)}#joystickZoneRight .joystick-knob{background:rgba(255,206,84,.8)}.btn{background:var(--primary);color:#fff;border:none;padding:10px 25px;border-radius:50px;font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 4px 0 #4a89dc;transition:all .1s}.btn:focus{outline:3px solid var(--accent);transform:scale(1.05)}.btn:active{transform:translateY(4px);box-shadow:0 0 0 #4a89dc}.btn-secondary{background:#aab2bd;box-shadow:0 4px 0 #656d78}.btn-secondary:active{box-shadow:0 0 0 #656d78}.btn-home{background:var(--primary);box-shadow:0 4px 0 #4a89dc;margin-top:15px;text-decoration:none;display:inline-block;padding:8px 20px;border-radius:50px;color:#fff;font-weight:700;font-size:.9rem}.btn-home:focus{outline:3px solid var(--accent);transform:scale(1.05)}.btn-home:active{box-shadow:0 0 0 #4a89dc;transform:translateY(4px)}.btn-fullscreen{background:rgba(0,0,0,.1);color:var(--text);border:1px solid rgba(0,0,0,.1);padding:5px 15px;border-radius:15px;font-family:inherit;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s}.btn-fullscreen:focus{outline:2px solid var(--accent)}.btn-fullscreen:hover{background:rgba(0,0,0,.2)}.overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.98);padding:2rem;border-radius:20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.2);min-width:320px;z-index:30}#startScreen{display:block}#gameOverModal{display:none}#rotateOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#2d3436;z-index:9999;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center}#rotateOverlay svg{width:100px;height:100px;fill:white;margin-bottom:20px;animation:rotate-phone 2s infinite ease-in-out}@keyframes rotate-phone{0%,10%{transform:rotate(0)}40%,60%{transform:rotate(90deg)}100%,90%{transform:rotate(90deg)}}#tvUnsupported{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#2d3436;z-index:9999;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center}h1{color:var(--primary);font-size:2.5rem;margin-bottom:.5rem}h2{color:var(--text);font-size:1.5rem;margin-bottom:1.5rem}.final-score{font-size:1.5rem;margin-bottom:1.5rem;color:var(--text)}.name-input{margin:10px 0;padding:10px;border-radius:10px;border:2px solid #ddd;font-family:inherit;font-size:1rem;width:80%;display:none}.button-group{display:flex;gap:10px;justify-content:center;margin-top:10px}.controls-hint{margin-top:1rem;color:#888;font-size:.9rem;text-align:center}@media screen and (orientation:portrait){body.mode-mobile #rotateOverlay{display:flex}}body.mode-tv{cursor:none}</style></head><body><div id="rotateOverlay"><svg viewBox="0 0 24 24"><path d="M17,1.01L7,1C5.9,1 5,1.9 5,3v18c0,1.1 0.9,2 2,2h10c1.1,0 2-0.9 2-2V3C19,1.9 18.1,1.01 17,1.01z M17,21H7l0-1h10V21z M17,18H7V6h10V18z M7,4V3h10v1H7z"/></svg><h2>Please Rotate Your Device</h2><p>This game is best played in landscape mode.</p></div><div id="tvUnsupported"><h1>⚠️ Unsupported Device</h1><p>Tiny Knights is not supported on TV devices.</p><a href="index.html" class="btn btn-home" style="margin-top:20px">Back to Home</a></div><div id="gameWrapper"><div class="ui-panel"><div class="score-box">🛡️ <span id="wave">1</span></div><div class="score-box">💰 <span id="score">0</span></div><div class="score-box">🏆 <span id="highScoreText">Player</span>: <span id="highScore">0</span></div><div class="score-box">❤️ <span id="health">100</span></div><button class="btn-fullscreen" onclick="toggleFullScreen()">⛶</button></div><div class="wave-bar-container"><div id="waveBar" class="wave-bar-fill"></div></div><div class="game-container" id="gameContainer" tabindex="0"><canvas id="gameCanvas" width="600" height="400"></canvas><div id="startScreen" class="overlay"><h1 style="color:#5d9cec">TINY KNIGHTS</h1><h2>Defend the Kingdom!</h2><button class="btn" onclick="startGame()">START ADVENTURE</button><p class="controls-hint">WASD to Move • Mouse/Right Stick to Attack</p></div><div id="gameOverModal" class="overlay"><h1 id="gameOverTitle" style="color:#ed5565">GAME OVER</h1><p class="final-score">Wave Reached: <span id="finalWave">0</span></p><p class="final-score">Score: <span id="finalScore">0</span></p><input type="text" id="playerNameInput" class="name-input" placeholder="Enter your name" maxlength="10"><div class="button-group"><button class="btn" onclick="handleGameOverAction()">TRY AGAIN</button> <button class="btn btn-secondary" onclick="showStartScreen()">MENU</button></div></div><div class="mobile-controls"><div id="joystickZoneLeft" class="joystick-zone"><div id="joystickKnobLeft" class="joystick-knob"></div></div><div id="joystickZoneRight" class="joystick-zone"><div id="joystickKnobRight" class="joystick-knob"></div></div></div></div></div><a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a><script>const urlParams=new URLSearchParams(window.location.search),mode=urlParams.get("mode");"tv"===mode?document.body.classList.add("mode-tv"):"mobile"===mode&&document.body.classList.add("mode-mobile");const SoundManager={ctx:new(window.AudioContext||window.webkitAudioContext),playTone(e,t,a,n=.1){"suspended"===this.ctx.state&&this.ctx.resume();const o=this.ctx.createOscillator(),r=this.ctx.createGain();o.type=t,o.frequency.setValueAtTime(e,this.ctx.currentTime),r.gain.setValueAtTime(n,this.ctx.currentTime),r.gain.exponentialRampToValueAtTime(.01,this.ctx.currentTime+a),o.connect(r),r.connect(this.ctx.destination),o.start(),o.stop(this.ctx.currentTime+a)},playAttack(){this.playTone(300,"triangle",.1,.1),setTimeout(()=>this.playTone(100,"sawtooth",.1,.1),50)},playShoot(){this.playTone(600,"square",.05,.1)},playSpin(){this.playTone(200,"sawtooth",.3,.1)},playHit(){this.playTone(150,"square",.1,.1)},playCoin(){this.playTone(1e3,"sine",.1,.1),setTimeout(()=>this.playTone(1500,"sine",.2,.1),50)},playPowerup(){this.playTone(500,"sine",.1,.1),setTimeout(()=>this.playTone(800,"sine",.2,.1),100)},playDie(){this.playTone(200,"sawtooth",.5,.2),setTimeout(()=>this.playTone(100,"sawtooth",.5,.2),200)}},canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d"),scoreEl=document.getElementById("score"),healthEl=document.getElementById("health"),waveEl=document.getElementById("wave"),waveBar=document.getElementById("waveBar"),highScoreEl=document.getElementById("highScore"),highScoreTextEl=document.getElementById("highScoreText"),startScreen=document.getElementById("startScreen"),gameOverModal=document.getElementById("gameOverModal"),finalScoreEl=document.getElementById("finalScore"),nameInput=document.getElementById("playerNameInput"),gameOverTitle=document.getElementById("gameOverTitle"),finalWaveEl=document.getElementById("finalWave"),gameContainer=document.getElementById("gameContainer");let score=0,highScore=0,highScoreName="Player",wave=1,isGameOver=!1,enemiesToSpawn=0,totalEnemiesInWave=0,spawnTimer=0,spawnRate=60;const player={x:canvas.width/2,y:canvas.height/2,radius:15,baseSpeed:4,speed:4,health:100,maxHealth:100,color:"#5D9CEC",angle:0,isAttacking:!1,attackTimer:0,attackDuration:15,attackCooldown:0,baseDamage:35,damage:35,weaponType:"sword",powerupTimer:0},keys={w:!1,a:!1,s:!1,d:!1,space:!1};let mouseX=0,mouseY=0,isMouseDown=!1,rightJoystickActive=!1,rightJoystickAngle=0,enemies=[],particles=[],coins=[],powerups=[],projectiles=[],damageNumbers=[];const EnemyTypes={PAWN:{type:"pawn",hp:30,speed:1.2,damage:5,color:"#ED5565",radius:12,score:10,icon:"♟️",attackCooldownMax:60},KNIGHT:{type:"knight",hp:60,speed:1,damage:10,color:"#AC92EC",radius:16,score:25,icon:"🛡️",chargeCooldown:150,attackCooldownMax:90},MAGE:{type:"mage",hp:25,speed:.8,damage:8,color:"#4FC1E9",radius:12,score:30,icon:"🧙‍♂️",range:200,shootCooldown:180,attackCooldownMax:60},ROGUE:{type:"rogue",hp:20,speed:2.2,damage:10,color:"#A0D468",radius:10,score:40,icon:"🗡️",attackCooldownMax:30}};function loadHighScore(){highScore=localStorage.getItem("tinyKnightsHighScore")||0,highScoreName=localStorage.getItem("tinyKnightsHighScoreName")||"Player",highScoreEl.textContent=highScore,highScoreTextEl.textContent=highScoreName}function saveHighScore(e,t){e>highScore&&(highScore=e,highScoreName=t,localStorage.setItem("tinyKnightsHighScore",highScore),localStorage.setItem("tinyKnightsHighScoreName",highScoreName),highScoreEl.textContent=highScore,highScoreTextEl.textContent=highScoreName)}function startGame(){startScreen.style.display="none",gameOverModal.style.display="none","suspended"===SoundManager.ctx.state&&SoundManager.ctx.resume(),resetGame(),gameContainer.focus(),requestAnimationFrame(update)}function resetGame(){score=0,wave=1,player.health=100,player.x=canvas.width/2,player.y=canvas.height/2,player.speed=player.baseSpeed,player.damage=player.baseDamage,player.weaponType="sword",player.powerupTimer=0,enemies=[],particles=[],coins=[],powerups=[],projectiles=[],damageNumbers=[],isGameOver=!1,startWave(),updateUI()}function startWave(){totalEnemiesInWave=5+Math.floor(2.5*wave),enemiesToSpawn=totalEnemiesInWave,spawnTimer=0,spawnRate=Math.max(20,60-2*wave),waveEl.textContent=wave,createFloatingText("WAVE "+wave,canvas.width/2,canvas.height/2,40,"#FFF")}function showStartScreen(){gameOverModal.style.display="none",startScreen.style.display="block",isGameOver=!0,setTimeout(()=>{const e=startScreen.querySelector("button");e&&e.focus()},100)}function handleGameOverAction(){if("none"!==nameInput.style.display){const e=nameInput.value.trim()||"Anonymous";saveHighScore(score,e)}startGame()}function gameOver(){isGameOver=!0,SoundManager.playDie(),finalScoreEl.textContent=score,finalWaveEl.textContent=wave,gameOverModal.style.display="block",score>highScore?(nameInput.style.display="block",nameInput.focus()):(nameInput.style.display="none",setTimeout(()=>{const e=gameOverModal.querySelector("button");e&&e.focus()},100))}function update(){if(isGameOver)return;ctx.fillStyle="#A0D468",ctx.fillRect(0,0,canvas.width,canvas.height),ctx.strokeStyle="rgba(0,0,0,0.05)",ctx.lineWidth=1;for(let e=0;e<canvas.width;e+=40)ctx.beginPath(),ctx.moveTo(e,0),ctx.lineTo(e,canvas.height),ctx.stroke();for(let e=0;e<canvas.height;e+=40)ctx.beginPath(),ctx.moveTo(0,e),ctx.lineTo(canvas.width,e),ctx.stroke();updatePlayer(),updateEnemies(),updateProjectiles(),updatePowerups(),updateCoins(),updateParticles(),updateDamageNumbers(),drawPlayer(),drawEnemies(),drawPowerups(),drawCoins(),drawProjectiles(),drawParticles(),drawDamageNumbers(),enemiesToSpawn>0?(spawnTimer++,spawnTimer>spawnRate&&(spawnEnemy(),enemiesToSpawn--,spawnTimer=0)):0===enemies.length&&(wave++,player.health=Math.min(player.maxHealth,player.health+20),startWave());const e=1-(enemiesToSpawn+enemies.length)/totalEnemiesInWave;waveBar.style.width=100*e+"%",requestAnimationFrame(update)}function updatePlayer(){let e=0,t=0;if(keys.w&&(t-=1),keys.s&&(t+=1),keys.a&&(e-=1),keys.d&&(e+=1),0!==e&&0!==t){const a=Math.sqrt(e*e+t*t);e/=a,t/=a}player.x+=e*player.speed,player.y+=t*player.speed,player.x=Math.max(player.radius,Math.min(canvas.width-player.radius,player.x)),player.y=Math.max(player.radius,Math.min(canvas.height-player.radius,player.y)),rightJoystickActive?player.angle=rightJoystickAngle:0===e&&0===t||(player.angle=Math.atan2(t,e)),player.powerupTimer>0&&(player.powerupTimer--,player.powerupTimer<=0&&(player.speed=player.baseSpeed,player.damage=player.baseDamage,player.weaponType="sword",createFloatingText("POWER DOWN",player.x,player.y-30,16,"#888"))),player.attackCooldown>0&&player.attackCooldown--;(keys.space||isMouseDown||rightJoystickActive)&&player.attackCooldown<=0&&performAttack(),player.isAttacking&&(player.attackTimer--,player.attackTimer<=0&&(player.isAttacking=!1))}function performAttack(){if(player.attackCooldown=20,"gun"===player.weaponType)SoundManager.playShoot(),projectiles.push({x:player.x,y:player.y,vx:10*Math.cos(player.angle),vy:10*Math.sin(player.angle),damage:player.damage,color:"#FFF",fromPlayer:!0,life:60});else if("spin"===player.weaponType)SoundManager.playSpin(),player.isAttacking=!0,player.attackTimer=20,player.attackCooldown=5,enemies.forEach(e=>{if(Math.hypot(e.x-player.x,e.y-player.y)<80){damageEnemy(e,.5*player.damage);const t=Math.atan2(e.y-player.y,e.x-player.x);e.x+=10*Math.cos(t),e.y+=10*Math.sin(t)}});else{SoundManager.playAttack(),player.isAttacking=!0,player.attackTimer=player.attackDuration;const e=60,t=Math.PI/1.5;enemies.forEach(a=>{const n=a.x-player.x,o=a.y-player.y,r=Math.sqrt(n*n+o*o),l=Math.atan2(o,n);let s=l-player.angle;for(;s>Math.PI;)s-=2*Math.PI;for(;s<-Math.PI;)s+=2*Math.PI;r<e&&Math.abs(s)<t/2&&(damageEnemy(a,player.damage),a.x+=15*Math.cos(l),a.y+=15*Math.sin(l))})}}function spawnEnemy(){let e,t;Math.random()<.5?(e=Math.random()<.5?-20:canvas.width+20,t=Math.random()*canvas.height):(e=Math.random()*canvas.width,t=Math.random()<.5?-20:canvas.height+20);const a=Math.random();let n=EnemyTypes.PAWN;wave>1&&a>.7&&(n=EnemyTypes.KNIGHT),wave>2&&a>.85&&(n=EnemyTypes.MAGE),wave>3&&a>.92&&(n=EnemyTypes.ROGUE);const o=n.hp+5*wave,r=n.damage+wave;enemies.push({...n,x:e,y:t,maxHp:o,health:o,damage:r,state:"chase",timer:0,attackCooldown:0})}function updateEnemies(){enemies.forEach(e=>{const t=player.x-e.x,a=player.y-e.y,n=Math.sqrt(t*t+a*a),o=Math.atan2(a,t);e.attackCooldown>0&&e.attackCooldown--,"knight"===e.type?"chase"===e.state?(e.x+=Math.cos(o)*e.speed,e.y+=Math.sin(o)*e.speed,n<150&&Math.random()<.02&&(e.state="prepare",e.timer=30)):"prepare"===e.state?(e.timer--,e.timer<=0&&(e.state="charge",e.timer=40,e.chargeAngle=o)):"charge"===e.state&&(e.x+=Math.cos(e.chargeAngle)*(4*e.speed),e.y+=Math.sin(e.chargeAngle)*(4*e.speed),e.timer--,e.timer<=0&&(e.state="chase")):"mage"===e.type?(n<150?(e.x-=Math.cos(o)*e.speed,e.y-=Math.sin(o)*e.speed):n>250&&(e.x+=Math.cos(o)*e.speed,e.y+=Math.sin(o)*e.speed),e.timer++,e.timer>e.shootCooldown&&(projectiles.push({x:e.x,y:e.y,vx:4*Math.cos(o),vy:4*Math.sin(o),damage:e.damage,color:"#4FC1E9",fromPlayer:!1,life:100}),e.timer=0)):(e.x+=Math.cos(o)*e.speed,e.y+=Math.sin(o)*e.speed),n<player.radius+e.radius&&(e.attackCooldown<=0?(takeDamage(e.damage),e.attackCooldown=e.attackCooldownMax||60,e.x-=20*Math.cos(o),e.y-=20*Math.sin(o)):(e.x-=2*Math.cos(o),e.y-=2*Math.sin(o)))})}function updateProjectiles(){for(let e=projectiles.length-1;e>=0;e--){let t=projectiles[e];if(t.x+=t.vx,t.y+=t.vy,t.life--,t.life<=0)projectiles.splice(e,1);else if(t.fromPlayer)for(let a=enemies.length-1;a>=0;a--){let n=enemies[a];if(Math.hypot(t.x-n.x,t.y-n.y)<n.radius+5){damageEnemy(n,t.damage),projectiles.splice(e,1);break}}else Math.hypot(t.x-player.x,t.y-player.y)<player.radius+5&&(takeDamage(t.damage),projectiles.splice(e,1))}}function damageEnemy(e,t){e.health-=t,createFloatingText(Math.floor(t),e.x,e.y-10,20,"#FFF"),createParticles(e.x,e.y,"#FFF",3),e.health<=0&&killEnemy(e)}function killEnemy(e){const t=enemies.indexOf(e);if(t>-1){enemies.splice(t,1),score+=e.score,createParticles(e.x,e.y,e.color,8);const a=Math.random();a<.1?spawnPowerup(e.x,e.y):a<.4&&coins.push({x:e.x,y:e.y,radius:6,timer:300}),updateUI()}}function spawnPowerup(e,t){const a=[{type:"health",icon:"❤️",color:"#ED5565"},{type:"speed",icon:"⚡",color:"#FFCE54"},{type:"damage",icon:"💪",color:"#A0D468"},{type:"gun",icon:"🔫",color:"#4FC1E9"},{type:"spin",icon:"🌪️",color:"#AC92EC"}],n=a[Math.floor(Math.random()*a.length)];powerups.push({...n,x:e,y:t,timer:600})}function updatePowerups(){for(let e=powerups.length-1;e>=0;e--){let t=powerups[e];t.timer--,Math.hypot(player.x-t.x,player.y-t.y)<player.radius+15?(activatePowerup(t),powerups.splice(e,1)):t.timer<=0&&powerups.splice(e,1)}}function activatePowerup(e){SoundManager.playPowerup(),createFloatingText(e.type.toUpperCase()+"!",player.x,player.y-40,20,e.color),"health"===e.type?player.health=Math.min(player.maxHealth,player.health+30):"speed"===e.type?(player.speed=1.5*player.baseSpeed,player.powerupTimer=600):"damage"===e.type?(player.damage=2*player.baseDamage,player.powerupTimer=600):"gun"===e.type?(player.weaponType="gun",player.powerupTimer=900):"spin"===e.type&&(player.weaponType="spin",player.powerupTimer=600),updateUI()}function takeDamage(e){player.health-=e,SoundManager.playHit(),createFloatingText("-"+e,player.x,player.y-20,24,"#ED5565"),updateUI(),player.health<=0&&gameOver()}function updateCoins(){for(let e=coins.length-1;e>=0;e--){const t=coins[e];t.timer--;const a=Math.hypot(player.x-t.x,player.y-t.y);a<player.radius+10?(score+=50,SoundManager.playCoin(),createFloatingText("+50",t.x,t.y,20,"#FFCE54"),coins.splice(e,1),updateUI()):a<100&&(t.x+=.05*(player.x-t.x),t.y+=.05*(player.y-t.y)),t.timer<=0&&coins.splice(e,1)}}function createParticles(e,t,a,n){for(let o=0;o<n;o++)particles.push({x:e,y:t,vx:8*(Math.random()-.5),vy:8*(Math.random()-.5),life:1,color:a})}function updateParticles(){for(let e=particles.length-1;e>=0;e--){let t=particles[e];t.x+=t.vx,t.y+=t.vy,t.life-=.05,t.life<=0&&particles.splice(e,1)}}function createFloatingText(e,t,a,n,o){damageNumbers.push({text:e,x:t,y:a,size:n,life:1,color:o})}function updateDamageNumbers(){for(let e=damageNumbers.length-1;e>=0;e--){let t=damageNumbers[e];t.y-=1,t.life-=.02,t.life<=0&&damageNumbers.splice(e,1)}}function drawPlayer(){if(ctx.save(),ctx.translate(player.x,player.y),"spin"===player.weaponType?(ctx.rotate(Date.now()/50),ctx.fillStyle="rgba(200, 200, 255, 0.3)",ctx.beginPath(),ctx.arc(0,0,80,0,2*Math.PI),ctx.fill()):ctx.rotate(player.angle),"gun"===player.weaponType)ctx.fillStyle="#333",ctx.fillRect(10,-4,15,8);else if("spin"===player.weaponType)ctx.fillStyle="#CCD1D9",ctx.fillRect(-40,-2,80,4),ctx.fillRect(-2,-40,4,80);else{if(player.isAttacking){const e=(1-player.attackTimer/player.attackDuration)*Math.PI-Math.PI/2;ctx.rotate(e)}ctx.fillStyle="#CCD1D9",ctx.fillRect(10,-3,25,6)}ctx.fillStyle=player.color,ctx.beginPath(),ctx.arc(0,0,player.radius,0,2*Math.PI),ctx.fill(),ctx.fillStyle="#333",ctx.fillRect(0,-5,10,10),ctx.restore()}function drawEnemies(){enemies.forEach(e=>{ctx.save(),ctx.translate(e.x,e.y),ctx.font="20px Arial",ctx.textAlign="center",ctx.textBaseline="middle",ctx.fillText(e.icon,0,0);const t=e.health/e.maxHp;ctx.fillStyle="#E9573F",ctx.fillRect(-12,-20,24,4),ctx.fillStyle="#8CC152",ctx.fillRect(-12,-20,24*t,4),ctx.restore()})}function drawPowerups(){powerups.forEach(e=>{ctx.font="24px Arial",ctx.textAlign="center",ctx.textBaseline="middle",ctx.fillText(e.icon,e.x,e.y)})}function drawProjectiles(){projectiles.forEach(e=>{ctx.fillStyle=e.color,ctx.beginPath(),ctx.arc(e.x,e.y,4,0,2*Math.PI),ctx.fill()})}function drawCoins(){coins.forEach(e=>{ctx.fillStyle="#FFCE54",ctx.beginPath(),ctx.arc(e.x,e.y,e.radius,0,2*Math.PI),ctx.fill(),ctx.strokeStyle="#F6BB42",ctx.lineWidth=2,ctx.stroke()})}function drawParticles(){particles.forEach(e=>{ctx.globalAlpha=e.life,ctx.fillStyle=e.color,ctx.beginPath(),ctx.arc(e.x,e.y,3,0,2*Math.PI),ctx.fill()}),ctx.globalAlpha=1}function drawDamageNumbers(){damageNumbers.forEach(e=>{ctx.globalAlpha=e.life,ctx.fillStyle=e.color,ctx.font=`bold ${e.size}px Fredoka`,ctx.textAlign="center",ctx.fillText(e.text,e.x,e.y)}),ctx.globalAlpha=1}function updateUI(){scoreEl.textContent=score,healthEl.textContent=Math.max(0,Math.floor(player.health))}function setupJoystick(e,t,a,n){const o=document.getElementById(e),r=document.getElementById(t);let l=!1,s={x:0,y:0};function i(e){let t=e.clientX-s.x,n=e.clientY-s.y;if(Math.sqrt(t*t+n*n)>35){const e=Math.atan2(n,t);t=35*Math.cos(e),n=35*Math.sin(e)}r.style.transform=`translate(calc(-50% + ${t}px), calc(-50% + ${n}px))`,a(t,n)}o.addEventListener("touchstart",e=>{e.preventDefault(),l=!0;const t=o.getBoundingClientRect();s={x:t.left+t.width/2,y:t.top+t.height/2},i(e.touches[0])},{passive:!1}),o.addEventListener("touchmove",e=>{e.preventDefault(),l&&i(e.touches[0])},{passive:!1}),o.addEventListener("touchend",e=>{e.preventDefault(),l=!1,r.style.transform="translate(-50%, -50%)",n()})}function toggleFullScreen(){const e=document.getElementById("gameWrapper");document.fullscreenElement?document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.msExitFullscreen&&document.msExitFullscreen():e.requestFullscreen?e.requestFullscreen():e.webkitRequestFullscreen?e.webkitRequestFullscreen():e.msRequestFullscreen&&e.msRequestFullscreen()}loadHighScore(),window.addEventListener("keydown",e=>{const t=e.key,a=e.keyCode;let n=!1;"Backspace"!==t&&"Escape"!==t&&8!==a&&27!==a&&461!==a&&10009!==a&&4!==a||(window.location.href="index.html",n=!0),(["w","ArrowUp","2"].includes(t)||38===a||19===a)&&(keys.w=!0,n=!0),(["a","ArrowLeft","4"].includes(t)||37===a||21===a)&&(keys.a=!0,n=!0),(["s","ArrowDown","8"].includes(t)||40===a||20===a)&&(keys.s=!0,n=!0),(["d","ArrowRight","6"].includes(t)||39===a||22===a)&&(keys.d=!0,n=!0),([" ","Enter","5"].includes(t)||13===a||23===a)&&("none"!==startScreen.style.display?"BUTTON"!==document.activeElement.tagName&&startGame():"none"!==gameOverModal.style.display?"BUTTON"!==document.activeElement.tagName&&handleGameOverAction():keys.space=!0,n=!0),"0"===t&&(toggleFullScreen(),n=!0),n&&(e.preventDefault(),e.stopPropagation())}),window.addEventListener("keyup",e=>{const t=e.key,a=e.keyCode;(["w","ArrowUp","2"].includes(t)||38===a||19===a)&&(keys.w=!1),(["a","ArrowLeft","4"].includes(t)||37===a||21===a)&&(keys.a=!1),(["s","ArrowDown","8"].includes(t)||40===a||20===a)&&(keys.s=!1),(["d","ArrowRight","6"].includes(t)||39===a||22===a)&&(keys.d=!1),([" ","Enter","5"].includes(t)||13===a||23===a)&&(keys.space=!1)}),canvas.addEventListener("mousemove",e=>{const t=canvas.getBoundingClientRect();mouseX=e.clientX-t.left,mouseY=e.clientY-t.top}),canvas.addEventListener("mousedown",()=>isMouseDown=!0),canvas.addEventListener("mouseup",()=>isMouseDown=!1),setupJoystick("joystickZoneLeft","joystickKnobLeft",(e,t)=>{keys.w=t<-10,keys.s=t>10,keys.a=e<-10,keys.d=e>10},()=>{keys.w=keys.a=keys.s=keys.d=!1}),setupJoystick("joystickZoneRight","joystickKnobRight",(e,t)=>{rightJoystickActive=!0,rightJoystickAngle=Math.atan2(t,e)},()=>{rightJoystickActive=!1}),window.onload=()=>{if("none"!==startScreen.style.display){const e=startScreen.querySelector("button");e&&e.focus()}else gameContainer.focus()},gameContainer.addEventListener("blur",()=>{isGameOver||"none"!==startScreen.style.display||setTimeout(()=>gameContainer.focus(),50)}),showStartScreen()</script><script src="global.js"></script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tiny Knights | Man Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #5D9CEC;
+            --accent: #FFCE54;
+            --bg: #E0F7FA;
+            --text: #2D3436;
+            --enemy: #ED5565;
+            --grass: #A0D468;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: radial-gradient(#5D9CEC 1px, transparent 1px);
+            background-size: 30px 30px;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #gameWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+
+        #gameWrapper:fullscreen {
+            background: var(--bg);
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .game-container {
+            position: relative;
+            background: #fff;
+            padding: 5px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 5px solid #fff;
+            outline: none;
+            /* Remove focus outline */
+        }
+
+        #gameWrapper:fullscreen .game-container {
+            box-shadow: none;
+            border: none;
+            background: transparent;
+            padding: 0;
+            max-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        canvas {
+            background: var(--grass);
+            border-radius: 10px;
+            display: block;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+            cursor: crosshair;
+        }
+
+        #gameWrapper:fullscreen canvas {
+            max-height: 100%;
+            width: auto;
+            max-width: 100%;
+        }
+
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 0.5rem;
+            padding: 0 5px;
+            align-items: center;
+        }
+
+        .score-box {
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .wave-bar-container {
+            width: 100%;
+            max-width: 600px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .wave-bar-fill {
+            height: 100%;
+            background: var(--enemy);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .mobile-controls {
+            display: none;
+            justify-content: space-between;
+            width: 100%;
+            padding: 20px 40px;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        body.mode-mobile .mobile-controls,
+        #gameWrapper:fullscreen .mobile-controls {
+            display: flex;
+        }
+
+        .joystick-zone {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: relative;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+        }
+
+        .joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Right joystick specific style */
+        #joystickZoneRight .joystick-knob {
+            background: rgba(255, 206, 84, 0.8);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #4A89DC;
+            transition: all 0.1s;
+        }
+
+        .btn:focus {
+            outline: 3px solid var(--accent);
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #4A89DC;
+        }
+
+        .btn-secondary {
+            background: #AAB2BD;
+            box-shadow: 0 4px 0 #656D78;
+        }
+
+        .btn-secondary:active {
+            box-shadow: 0 0 0 #656D78;
+        }
+
+        .btn-home {
+            background: var(--primary);
+            box-shadow: 0 4px 0 #4A89DC;
+            margin-top: 15px;
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .btn-home:focus {
+            outline: 3px solid var(--accent);
+            transform: scale(1.05);
+        }
+
+        .btn-home:active {
+            box-shadow: 0 0 0 #4A89DC;
+            transform: translateY(4px);
+        }
+
+        .btn-fullscreen {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-fullscreen:focus {
+            outline: 2px solid var(--accent);
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            min-width: 320px;
+            z-index: 30;
+        }
+
+        #startScreen {
+            display: block;
+        }
+
+        #gameOverModal {
+            display: none;
+        }
+
+        /* Rotate Device Overlay */
+        #rotateOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2D3436;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        #rotateOverlay svg {
+            width: 100px;
+            height: 100px;
+            fill: white;
+            margin-bottom: 20px;
+            animation: rotate-phone 2s infinite ease-in-out;
+        }
+
+        @keyframes rotate-phone {
+
+            0%,
+            10% {
+                transform: rotate(0deg);
+            }
+
+            40%,
+            60% {
+                transform: rotate(90deg);
+            }
+
+            90%,
+            100% {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* TV Unsupported Overlay */
+        #tvUnsupported {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2D3436;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            color: var(--text);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .final-score {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .name-input {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            font-family: inherit;
+            font-size: 1rem;
+            width: 80%;
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .controls-hint {
+            margin-top: 1rem;
+            color: #888;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* Mobile Portrait Check */
+        @media screen and (orientation: portrait) {
+            body.mode-mobile #rotateOverlay {
+                display: flex;
+            }
+        }
+
+        /* TV Mode */
+        body.mode-tv {
+            cursor: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Rotate Overlay -->
+    <div id="rotateOverlay">
+        <svg viewBox="0 0 24 24">
+            <path
+                d="M17,1.01L7,1C5.9,1 5,1.9 5,3v18c0,1.1 0.9,2 2,2h10c1.1,0 2-0.9 2-2V3C19,1.9 18.1,1.01 17,1.01z M17,21H7l0-1h10V21z M17,18H7V6h10V18z M7,4V3h10v1H7z" />
+        </svg>
+        <h2>Please Rotate Your Device</h2>
+        <p>This game is best played in landscape mode.</p>
+    </div>
+
+    <!-- TV Unsupported Overlay -->
+    <div id="tvUnsupported">
+        <h1>⚠️ Unsupported Device</h1>
+        <p>Tiny Knights is not supported on TV devices.</p>
+        <a href="index.html" class="btn btn-home" style="margin-top: 20px;">Back to Home</a>
+    </div>
+
+    <div id="gameWrapper">
+        <div class="ui-panel">
+            <div class="score-box">🛡️ <span id="wave">1</span></div>
+            <div class="score-box">💰 <span id="score">0</span></div>
+            <div class="score-box">🏆 <span id="highScoreText">Player</span>: <span id="highScore">0</span></div>
+            <div class="score-box">❤️ <span id="health">100</span></div>
+            <button class="btn-fullscreen" onclick="toggleFullScreen()">⛶</button>
+        </div>
+        <div class="wave-bar-container">
+            <div id="waveBar" class="wave-bar-fill"></div>
+        </div>
+
+        <div class="game-container" id="gameContainer" tabindex="0">
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+            <!-- Start Screen -->
+            <div id="startScreen" class="overlay">
+                <h1 style="color: #5D9CEC;">TINY KNIGHTS</h1>
+                <h2>Defend the Kingdom!</h2>
+                <button class="btn" onclick="startGame()">START ADVENTURE</button>
+                <p class="controls-hint">WASD to Move • Mouse/Right Stick to Attack</p>
+            </div>
+
+            <!-- Game Over Modal -->
+            <div id="gameOverModal" class="overlay">
+                <h1 id="gameOverTitle" style="color: #ED5565;">GAME OVER</h1>
+                <p class="final-score">Wave Reached: <span id="finalWave">0</span></p>
+                <p class="final-score">Score: <span id="finalScore">0</span></p>
+                <input type="text" id="playerNameInput" class="name-input" placeholder="Enter your name" maxlength="10">
+                <div class="button-group">
+                    <button class="btn" onclick="handleGameOverAction()">TRY AGAIN</button>
+                    <button class="btn btn-secondary" onclick="showStartScreen()">MENU</button>
+                </div>
+            </div>
+
+            <div class="mobile-controls">
+                <div id="joystickZoneLeft" class="joystick-zone">
+                    <div id="joystickKnobLeft" class="joystick-knob"></div>
+                </div>
+                <div id="joystickZoneRight" class="joystick-zone">
+                    <div id="joystickKnobRight" class="joystick-knob"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a>
+
+    <script>
+        // Check URL params for mode
+        // Check URL params for mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+
+        function isTouchDevice() {
+            return (('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (navigator.msMaxTouchPoints > 0));
+        }
+
+        if (mode === 'tv') {
+            // TV is supported now!
+            // document.getElementById('tvUnsupported').style.display = 'flex';
+            // document.getElementById('gameWrapper').style.display = 'none';
+            document.body.classList.add('mode-tv');
+        } else if (mode === 'mobile' || isTouchDevice()) {
+            document.body.classList.add('mode-mobile');
+        }
+
+        // Sound Manager
+        const SoundManager = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+
+            playTone(freq, type, duration, vol = 0.1) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+
+            playAttack() {
+                this.playTone(300, 'triangle', 0.1, 0.1);
+                setTimeout(() => this.playTone(100, 'sawtooth', 0.1, 0.1), 50);
+            },
+
+            playShoot() {
+                this.playTone(600, 'square', 0.05, 0.1);
+            },
+
+            playSpin() {
+                this.playTone(200, 'sawtooth', 0.3, 0.1);
+            },
+
+            playHit() {
+                this.playTone(150, 'square', 0.1, 0.1);
+            },
+
+            playCoin() {
+                this.playTone(1000, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(1500, 'sine', 0.2, 0.1), 50);
+            },
+
+            playPowerup() {
+                this.playTone(500, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(800, 'sine', 0.2, 0.1), 100);
+            },
+
+            playDie() {
+                this.playTone(200, 'sawtooth', 0.5, 0.2);
+                setTimeout(() => this.playTone(100, 'sawtooth', 0.5, 0.2), 200);
+            }
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const healthEl = document.getElementById('health');
+        const waveEl = document.getElementById('wave');
+        const waveBar = document.getElementById('waveBar');
+        const highScoreEl = document.getElementById('highScore');
+        const highScoreTextEl = document.getElementById('highScoreText');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalScoreEl = document.getElementById('finalScore');
+        const nameInput = document.getElementById('playerNameInput');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const finalWaveEl = document.getElementById('finalWave');
+        const gameContainer = document.getElementById('gameContainer');
+
+
+        // Game State
+        let score = 0;
+        let highScore = 0;
+        let highScoreName = 'Player';
+        let wave = 1;
+        let isGameOver = false;
+
+        // Wave Management
+        let enemiesToSpawn = 0;
+        let totalEnemiesInWave = 0;
+        let spawnTimer = 0;
+        let spawnRate = 60;
+
+        // Player
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 15,
+            baseSpeed: 4,
+            speed: 4,
+            health: 100,
+            maxHealth: 100,
+            color: '#5D9CEC',
+            angle: 0,
+            isAttacking: false,
+            attackTimer: 0,
+            attackDuration: 15,
+            attackCooldown: 0,
+            baseDamage: 35,
+            damage: 35,
+            weaponType: 'sword', // sword, gun, spin
+            powerupTimer: 0
+        };
+
+        // Inputs
+        const keys = { w: false, a: false, s: false, d: false, space: false };
+        let mouseX = 0;
+        let mouseY = 0;
+        let isMouseDown = false;
+        let rightJoystickActive = false;
+        let rightJoystickAngle = 0;
+
+        // Entities
+        let enemies = [];
+        let particles = [];
+        let coins = [];
+        let powerups = [];
+        let projectiles = [];
+        let damageNumbers = [];
+
+        // Enemy Classes
+        const EnemyTypes = {
+            PAWN: {
+                type: 'pawn', hp: 30, speed: 1.2, damage: 5, color: '#ED5565', radius: 12, score: 10,
+                icon: '♟️', attackCooldownMax: 60 // 1 second cooldown after hit
+            },
+            KNIGHT: {
+                type: 'knight', hp: 60, speed: 1.0, damage: 10, color: '#AC92EC', radius: 16, score: 25,
+                icon: '🛡️', chargeCooldown: 150, attackCooldownMax: 90 // 1.5 second cooldown after hit
+            },
+            MAGE: {
+                type: 'mage', hp: 25, speed: 0.8, damage: 8, color: '#4FC1E9', radius: 12, score: 30,
+                icon: '🧙‍♂️', range: 200, shootCooldown: 180, attackCooldownMax: 60
+            },
+            ROGUE: {
+                type: 'rogue', hp: 20, speed: 2.2, damage: 10, color: '#A0D468', radius: 10, score: 40,
+                icon: '🗡️', attackCooldownMax: 30
+            }
+        };
+
+        loadHighScore();
+
+        function loadHighScore() {
+            highScore = localStorage.getItem('tinyKnightsHighScore') || 0;
+            highScoreName = localStorage.getItem('tinyKnightsHighScoreName') || 'Player';
+            highScoreEl.textContent = highScore;
+            highScoreTextEl.textContent = highScoreName;
+        }
+
+        function saveHighScore(newScore, newName) {
+            if (newScore > highScore) {
+                highScore = newScore;
+                highScoreName = newName;
+                localStorage.setItem('tinyKnightsHighScore', highScore);
+                localStorage.setItem('tinyKnightsHighScoreName', highScoreName);
+                highScoreEl.textContent = highScore;
+                highScoreTextEl.textContent = highScoreName;
+            }
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameOverModal.style.display = 'none';
+            if (SoundManager.ctx.state === 'suspended') SoundManager.ctx.resume();
+            resetGame();
+            gameContainer.focus();
+            requestAnimationFrame(update);
+        }
+
+        function resetGame() {
+            score = 0;
+            wave = 1;
+            player.health = 100;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.speed = player.baseSpeed;
+            player.damage = player.baseDamage;
+            player.weaponType = 'sword';
+            player.powerupTimer = 0;
+
+            enemies = [];
+            particles = [];
+            coins = [];
+            powerups = [];
+            projectiles = [];
+            damageNumbers = [];
+
+            isGameOver = false;
+            startWave();
+            updateUI();
+        }
+
+        function startWave() {
+            totalEnemiesInWave = 5 + Math.floor(wave * 2.5);
+            enemiesToSpawn = totalEnemiesInWave;
+            spawnTimer = 0;
+            spawnRate = Math.max(20, 60 - (wave * 2)); // Spawn faster
+            waveEl.textContent = wave;
+            createFloatingText("WAVE " + wave, canvas.width / 2, canvas.height / 2, 40, '#FFF');
+        }
+
+        function showStartScreen() {
+            gameOverModal.style.display = 'none';
+            startScreen.style.display = 'block';
+            isGameOver = true;
+
+            // Focus start button
+            setTimeout(() => {
+                const btn = startScreen.querySelector('button');
+                if (btn) btn.focus();
+            }, 100);
+        }
+
+        function handleGameOverAction() {
+            if (nameInput.style.display !== 'none') {
+                const name = nameInput.value.trim() || 'Anonymous';
+                saveHighScore(score, name);
+            }
+            startGame();
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            SoundManager.playDie();
+            finalScoreEl.textContent = score;
+            finalWaveEl.textContent = wave;
+            gameOverModal.style.display = 'block';
+            if (score > highScore) {
+                nameInput.style.display = 'block';
+                nameInput.focus();
+            } else {
+                nameInput.style.display = 'none';
+                // Focus try again button
+                setTimeout(() => {
+                    const btn = gameOverModal.querySelector('button');
+                    if (btn) btn.focus();
+                }, 100);
+            }
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            // Clear
+            ctx.fillStyle = '#A0D468';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+            }
+
+            updatePlayer();
+            updateEnemies();
+            updateProjectiles();
+            updatePowerups();
+            updateCoins();
+            updateParticles();
+            updateDamageNumbers();
+
+            drawPlayer();
+            drawEnemies();
+            drawPowerups();
+            drawCoins();
+            drawProjectiles();
+            drawParticles();
+            drawDamageNumbers();
+
+            // Wave Logic
+            if (enemiesToSpawn > 0) {
+                spawnTimer++;
+                if (spawnTimer > spawnRate) {
+                    spawnEnemy();
+                    enemiesToSpawn--;
+                    spawnTimer = 0;
+                }
+            } else if (enemies.length === 0) {
+                wave++;
+                player.health = Math.min(player.maxHealth, player.health + 20);
+                startWave();
+            }
+
+            // Update Wave Bar
+            const enemiesRemaining = enemiesToSpawn + enemies.length;
+            const progress = 1 - (enemiesRemaining / totalEnemiesInWave);
+            waveBar.style.width = (progress * 100) + '%';
+
+            requestAnimationFrame(update);
+        }
+
+        function updatePlayer() {
+            // Move
+            let dx = 0, dy = 0;
+            if (keys.w) dy -= 1;
+            if (keys.s) dy += 1;
+            if (keys.a) dx -= 1;
+            if (keys.d) dx += 1;
+
+            if (dx !== 0 && dy !== 0) {
+                const len = Math.sqrt(dx * dx + dy * dy);
+                dx /= len; dy /= len;
+            }
+
+            player.x += dx * player.speed;
+            player.y += dy * player.speed;
+
+            // Bounds
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+            // Angle
+            if (rightJoystickActive) {
+                player.angle = rightJoystickAngle;
+            } else {
+                // If using keyboard/TV, face movement direction or keep last angle
+                if (dx !== 0 || dy !== 0) {
+                    player.angle = Math.atan2(dy, dx);
+                }
+                // Mouse override if active
+                // player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+            }
+
+            // Powerup Timer
+            if (player.powerupTimer > 0) {
+                player.powerupTimer--;
+                if (player.powerupTimer <= 0) {
+                    // Reset stats
+                    player.speed = player.baseSpeed;
+                    player.damage = player.baseDamage;
+                    player.weaponType = 'sword';
+                    createFloatingText("POWER DOWN", player.x, player.y - 30, 16, '#888');
+                }
+            }
+
+            // Attack
+            if (player.attackCooldown > 0) player.attackCooldown--;
+
+            // Attack input: Space, Mouse Click, or Right Joystick Active
+            const isAttackingInput = keys.space || isMouseDown || rightJoystickActive;
+
+            if (isAttackingInput && player.attackCooldown <= 0) {
+                performAttack();
+            }
+
+            if (player.isAttacking) {
+                player.attackTimer--;
+                if (player.attackTimer <= 0) player.isAttacking = false;
+            }
+        }
+
+        function performAttack() {
+            player.attackCooldown = 20;
+
+            if (player.weaponType === 'gun') {
+                SoundManager.playShoot();
+                projectiles.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(player.angle) * 10,
+                    vy: Math.sin(player.angle) * 10,
+                    damage: player.damage,
+                    color: '#FFF',
+                    fromPlayer: true,
+                    life: 60
+                });
+            } else if (player.weaponType === 'spin') {
+                SoundManager.playSpin();
+                player.isAttacking = true;
+                player.attackTimer = 20;
+                player.attackCooldown = 5; // Fast spin
+
+                // Area damage
+                enemies.forEach(enemy => {
+                    const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                    if (dist < 80) {
+                        damageEnemy(enemy, player.damage * 0.5);
+                        // Knockback
+                        const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+                        enemy.x += Math.cos(angle) * 10;
+                        enemy.y += Math.sin(angle) * 10;
+                    }
+                });
+            } else {
+                // Sword
+                SoundManager.playAttack();
+                player.isAttacking = true;
+                player.attackTimer = player.attackDuration;
+
+                const swordRange = 60;
+                const swordArc = Math.PI / 1.5;
+
+                enemies.forEach(enemy => {
+                    const dx = enemy.x - player.x;
+                    const dy = enemy.y - player.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angleToEnemy = Math.atan2(dy, dx);
+
+                    let angleDiff = angleToEnemy - player.angle;
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+                    if (dist < swordRange && Math.abs(angleDiff) < swordArc / 2) {
+                        damageEnemy(enemy, player.damage);
+                        enemy.x += Math.cos(angleToEnemy) * 15;
+                        enemy.y += Math.sin(angleToEnemy) * 15;
+                    }
+                });
+            }
+        }
+
+        function spawnEnemy() {
+            let x, y;
+            if (Math.random() < 0.5) {
+                x = Math.random() < 0.5 ? -20 : canvas.width + 20;
+                y = Math.random() * canvas.height;
+            } else {
+                x = Math.random() * canvas.width;
+                y = Math.random() < 0.5 ? -20 : canvas.height + 20;
+            }
+
+            // Determine type
+            const rand = Math.random();
+            let type = EnemyTypes.PAWN;
+
+            if (wave > 1 && rand > 0.7) type = EnemyTypes.KNIGHT;
+            if (wave > 2 && rand > 0.85) type = EnemyTypes.MAGE;
+            if (wave > 3 && rand > 0.92) type = EnemyTypes.ROGUE;
+
+            // Scale stats
+            const hp = type.hp + (wave * 5);
+            const damage = type.damage + wave;
+
+            enemies.push({
+                ...type,
+                x: x, y: y,
+                maxHp: hp, health: hp,
+                damage: damage,
+                state: 'chase', // chase, charge, retreat
+                timer: 0,
+                attackCooldown: 0 // Initialize cooldown
+            });
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx);
+
+                // Reduce attack cooldown
+                if (enemy.attackCooldown > 0) enemy.attackCooldown--;
+
+                // AI Behavior
+                if (enemy.type === 'knight') {
+                    if (enemy.state === 'chase') {
+                        enemy.x += Math.cos(angle) * enemy.speed;
+                        enemy.y += Math.sin(angle) * enemy.speed;
+                        if (dist < 150 && Math.random() < 0.02) {
+                            enemy.state = 'prepare';
+                            enemy.timer = 30; // Wait frames
+                        }
+                    } else if (enemy.state === 'prepare') {
+                        enemy.timer--;
+                        if (enemy.timer <= 0) {
+                            enemy.state = 'charge';
+                            enemy.timer = 40; // Charge duration
+                            enemy.chargeAngle = angle;
+                        }
+                    } else if (enemy.state === 'charge') {
+                        enemy.x += Math.cos(enemy.chargeAngle) * (enemy.speed * 4);
+                        enemy.y += Math.sin(enemy.chargeAngle) * (enemy.speed * 4);
+                        enemy.timer--;
+                        if (enemy.timer <= 0) enemy.state = 'chase';
+                    }
+                } else if (enemy.type === 'mage') {
+                    if (dist < 150) {
+                        // Retreat
+                        enemy.x -= Math.cos(angle) * enemy.speed;
+                        enemy.y -= Math.sin(angle) * enemy.speed;
+                    } else if (dist > 250) {
+                        // Chase
+                        enemy.x += Math.cos(angle) * enemy.speed;
+                        enemy.y += Math.sin(angle) * enemy.speed;
+                    }
+
+                    // Shoot
+                    enemy.timer++;
+                    if (enemy.timer > enemy.shootCooldown) {
+                        projectiles.push({
+                            x: enemy.x, y: enemy.y,
+                            vx: Math.cos(angle) * 4,
+                            vy: Math.sin(angle) * 4,
+                            damage: enemy.damage,
+                            color: '#4FC1E9',
+                            fromPlayer: false,
+                            life: 100
+                        });
+                        enemy.timer = 0;
+                    }
+                } else {
+                    // Pawn, Rogue
+                    enemy.x += Math.cos(angle) * enemy.speed;
+                    enemy.y += Math.sin(angle) * enemy.speed;
+                }
+
+                // Collision with player (Melee Attack)
+                if (dist < player.radius + enemy.radius) {
+                    if (enemy.attackCooldown <= 0) {
+                        takeDamage(enemy.damage);
+                        enemy.attackCooldown = enemy.attackCooldownMax || 60; // Set cooldown
+
+                        // Bounce
+                        enemy.x -= Math.cos(angle) * 20;
+                        enemy.y -= Math.sin(angle) * 20;
+                    } else {
+                        // Just bounce without damage if on cooldown
+                        enemy.x -= Math.cos(angle) * 2;
+                        enemy.y -= Math.sin(angle) * 2;
+                    }
+                }
+            });
+        }
+
+        function updateProjectiles() {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                if (p.life <= 0) {
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                if (p.fromPlayer) {
+                    // Hit enemies
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        let e = enemies[j];
+                        if (Math.hypot(p.x - e.x, p.y - e.y) < e.radius + 5) {
+                            damageEnemy(e, p.damage);
+                            projectiles.splice(i, 1);
+                            break;
+                        }
+                    }
+                } else {
+                    // Hit player
+                    if (Math.hypot(p.x - player.x, p.y - player.y) < player.radius + 5) {
+                        takeDamage(p.damage);
+                        projectiles.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        function damageEnemy(enemy, amount) {
+            enemy.health -= amount;
+            createFloatingText(Math.floor(amount), enemy.x, enemy.y - 10, 20, '#FFF');
+            createParticles(enemy.x, enemy.y, '#FFF', 3);
+
+            if (enemy.health <= 0) {
+                killEnemy(enemy);
+            }
+        }
+
+        function killEnemy(enemy) {
+            const index = enemies.indexOf(enemy);
+            if (index > -1) {
+                enemies.splice(index, 1);
+                score += enemy.score;
+                createParticles(enemy.x, enemy.y, enemy.color, 8);
+
+                // Drop Logic
+                const rand = Math.random();
+                if (rand < 0.1) { // 10% Powerup
+                    spawnPowerup(enemy.x, enemy.y);
+                } else if (rand < 0.4) { // 30% Coin
+                    coins.push({ x: enemy.x, y: enemy.y, radius: 6, timer: 300 });
+                }
+                updateUI();
+            }
+        }
+
+        function spawnPowerup(x, y) {
+            const types = [
+                { type: 'health', icon: '❤️', color: '#ED5565' },
+                { type: 'speed', icon: '⚡', color: '#FFCE54' },
+                { type: 'damage', icon: '💪', color: '#A0D468' },
+                { type: 'gun', icon: '🔫', color: '#4FC1E9' },
+                { type: 'spin', icon: '🌪️', color: '#AC92EC' }
+            ];
+            const p = types[Math.floor(Math.random() * types.length)];
+            powerups.push({ ...p, x: x, y: y, timer: 600 });
+        }
+
+        function updatePowerups() {
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                let p = powerups[i];
+                p.timer--;
+
+                if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + 15) {
+                    activatePowerup(p);
+                    powerups.splice(i, 1);
+                } else if (p.timer <= 0) {
+                    powerups.splice(i, 1);
+                }
+            }
+        }
+
+        function activatePowerup(p) {
+            SoundManager.playPowerup();
+            createFloatingText(p.type.toUpperCase() + "!", player.x, player.y - 40, 20, p.color);
+
+            if (p.type === 'health') {
+                player.health = Math.min(player.maxHealth, player.health + 30);
+            } else if (p.type === 'speed') {
+                player.speed = player.baseSpeed * 1.5;
+                player.powerupTimer = 600; // 10s
+            } else if (p.type === 'damage') {
+                player.damage = player.baseDamage * 2;
+                player.powerupTimer = 600;
+            } else if (p.type === 'gun') {
+                player.weaponType = 'gun';
+                player.powerupTimer = 900; // 15s
+            } else if (p.type === 'spin') {
+                player.weaponType = 'spin';
+                player.powerupTimer = 600;
+            }
+            updateUI();
+        }
+
+        function takeDamage(amount) {
+            player.health -= amount;
+            SoundManager.playHit();
+            createFloatingText("-" + amount, player.x, player.y - 20, 24, '#ED5565');
+            updateUI();
+            if (player.health <= 0) gameOver();
+        }
+
+        function updateCoins() {
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const coin = coins[i];
+                coin.timer--;
+                const dist = Math.hypot(player.x - coin.x, player.y - coin.y);
+
+                if (dist < player.radius + 10) {
+                    score += 50;
+                    SoundManager.playCoin();
+                    createFloatingText("+50", coin.x, coin.y, 20, '#FFCE54');
+                    coins.splice(i, 1);
+                    updateUI();
+                } else if (dist < 100) {
+                    coin.x += (player.x - coin.x) * 0.05;
+                    coin.y += (player.y - coin.y) * 0.05;
+                }
+                if (coin.timer <= 0) coins.splice(i, 1);
+            }
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                p.life -= 0.05;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function createFloatingText(text, x, y, size, color) {
+            damageNumbers.push({ text: text, x: x, y: y, size: size, life: 1.0, color: color });
+        }
+
+        function updateDamageNumbers() {
+            for (let i = damageNumbers.length - 1; i >= 0; i--) {
+                let d = damageNumbers[i];
+                d.y -= 1; d.life -= 0.02;
+                if (d.life <= 0) damageNumbers.splice(i, 1);
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Spin effect
+            if (player.weaponType === 'spin') {
+                ctx.rotate(Date.now() / 50);
+                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 80, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.rotate(player.angle);
+            }
+
+            // Weapon
+            if (player.weaponType === 'gun') {
+                ctx.fillStyle = '#333';
+                ctx.fillRect(10, -4, 15, 8);
+            } else if (player.weaponType === 'spin') {
+                ctx.fillStyle = '#CCD1D9';
+                ctx.fillRect(-40, -2, 80, 4);
+                ctx.fillRect(-2, -40, 4, 80);
+            } else {
+                // Sword
+                if (player.isAttacking) {
+                    const progress = 1 - (player.attackTimer / player.attackDuration);
+                    const swingAngle = (progress * Math.PI) - (Math.PI / 2);
+                    ctx.rotate(swingAngle);
+                }
+                ctx.fillStyle = '#CCD1D9';
+                ctx.fillRect(10, -3, 25, 6);
+            }
+
+            // Body
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Helmet
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, -5, 10, 10);
+
+            ctx.restore();
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y);
+
+                // Draw Icon
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(enemy.icon, 0, 0);
+
+                // Health bar
+                const hpPct = enemy.health / enemy.maxHp;
+                ctx.fillStyle = '#E9573F';
+                ctx.fillRect(-12, -20, 24, 4);
+                ctx.fillStyle = '#8CC152';
+                ctx.fillRect(-12, -20, 24 * hpPct, 4);
+
+                ctx.restore();
+            });
+        }
+
+        function drawPowerups() {
+            powerups.forEach(p => {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(p.icon, p.x, p.y);
+            });
+        }
+
+        function drawProjectiles() {
+            projectiles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawCoins() {
+            coins.forEach(coin => {
+                ctx.fillStyle = '#FFCE54';
+                ctx.beginPath();
+                ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#F6BB42';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawDamageNumbers() {
+            damageNumbers.forEach(d => {
+                ctx.globalAlpha = d.life;
+                ctx.fillStyle = d.color;
+                ctx.font = `bold ${d.size}px Fredoka`;
+                ctx.textAlign = 'center';
+                ctx.fillText(d.text, d.x, d.y);
+            });
+            ctx.globalAlpha = 1.0;
+        }
+
+        function updateUI() {
+            scoreEl.textContent = score;
+            healthEl.textContent = Math.max(0, Math.floor(player.health));
+        }
+
+        // Input Listeners
+        window.addEventListener('keydown', e => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37;
+            const TV_UP = 38;
+            const TV_RIGHT = 39;
+            const TV_DOWN = 40;
+            const TV_ENTER = 13;
+
+            // Alternate TV Keys
+            const ALT_LEFT = 21;
+            const ALT_RIGHT = 22;
+            const ALT_UP = 19;
+            const ALT_DOWN = 20;
+            const ALT_ENTER = 23;
+            const ALT_BACK = 4;
+            const TIZEN_BACK = 10009;
+
+            let handled = false;
+
+            // Handle Back Button
+            if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
+                window.location.href = 'index.html';
+                handled = true;
+            }
+
+            // Movement
+            if (['w', 'ArrowUp', '2'].includes(key) || keyCode === TV_UP || keyCode === ALT_UP) {
+                keys.w = true;
+                handled = true;
+            }
+            if (['a', 'ArrowLeft', '4'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT) {
+                keys.a = true;
+                handled = true;
+            }
+            if (['s', 'ArrowDown', '8'].includes(key) || keyCode === TV_DOWN || keyCode === ALT_DOWN) {
+                keys.s = true;
+                handled = true;
+            }
+            if (['d', 'ArrowRight', '6'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT) {
+                keys.d = true;
+                handled = true;
+            }
+
+            // Attack
+            if ([' ', 'Enter', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
+                if (startScreen.style.display !== 'none') {
+                    if (document.activeElement.tagName !== 'BUTTON') {
+                        startGame();
+                    }
+                } else if (gameOverModal.style.display !== 'none') {
+                    if (document.activeElement.tagName !== 'BUTTON') {
+                        handleGameOverAction();
+                    }
+                } else {
+                    keys.space = true;
+                }
+                handled = true;
+            }
+
+            // Fullscreen
+            if (key === '0') {
+                toggleFullScreen();
+                handled = true;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        window.addEventListener('keyup', e => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37;
+            const TV_UP = 38;
+            const TV_RIGHT = 39;
+            const TV_DOWN = 40;
+            const TV_ENTER = 13;
+
+            // Alternate TV Keys
+            const ALT_LEFT = 21;
+            const ALT_RIGHT = 22;
+            const ALT_UP = 19;
+            const ALT_DOWN = 20;
+            const ALT_ENTER = 23;
+
+            if (['w', 'ArrowUp', '2'].includes(key) || keyCode === TV_UP || keyCode === ALT_UP) keys.w = false;
+            if (['a', 'ArrowLeft', '4'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT) keys.a = false;
+            if (['s', 'ArrowDown', '8'].includes(key) || keyCode === TV_DOWN || keyCode === ALT_DOWN) keys.s = false;
+            if (['d', 'ArrowRight', '6'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT) keys.d = false;
+            if ([' ', 'Enter', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) keys.space = false;
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousedown', () => isMouseDown = true);
+        canvas.addEventListener('mouseup', () => isMouseDown = false);
+
+        // Joystick Logic
+        function setupJoystick(zoneId, knobId, onMove, onEnd) {
+            const zone = document.getElementById(zoneId);
+            const knob = document.getElementById(knobId);
+            let active = false;
+            let center = { x: 0, y: 0 };
+
+            zone.addEventListener('touchstart', e => {
+                e.preventDefault();
+                active = true;
+                const rect = zone.getBoundingClientRect();
+                center = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+                update(e.touches[0]);
+            }, { passive: false });
+
+            zone.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (active) update(e.touches[0]);
+            }, { passive: false });
+
+            zone.addEventListener('touchend', e => {
+                e.preventDefault();
+                active = false;
+                knob.style.transform = `translate(-50%, -50%)`;
+                onEnd();
+            });
+
+            function update(touch) {
+                const maxDist = 35;
+                let dx = touch.clientX - center.x;
+                let dy = touch.clientY - center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > maxDist) {
+                    const angle = Math.atan2(dy, dx);
+                    dx = Math.cos(angle) * maxDist;
+                    dy = Math.sin(angle) * maxDist;
+                }
+
+                knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                onMove(dx, dy);
+            }
+        }
+
+        // Left Joystick (Movement)
+        setupJoystick('joystickZoneLeft', 'joystickKnobLeft', (dx, dy) => {
+            const threshold = 10;
+            keys.w = dy < -threshold;
+            keys.s = dy > threshold;
+            keys.a = dx < -threshold;
+            keys.d = dx > threshold;
+        }, () => {
+            keys.w = keys.a = keys.s = keys.d = false;
+        });
+
+        // Right Joystick (Aim & Attack)
+        setupJoystick('joystickZoneRight', 'joystickKnobRight', (dx, dy) => {
+            rightJoystickActive = true;
+            rightJoystickAngle = Math.atan2(dy, dx);
+        }, () => {
+            rightJoystickActive = false;
+        });
+
+        function toggleFullScreen() {
+            const elem = document.getElementById("gameWrapper");
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+            }
+        }
+
+        // Focus game container on load for TV
+        window.onload = () => {
+            if (startScreen.style.display !== 'none') {
+                const btn = startScreen.querySelector('button');
+                if (btn) btn.focus();
+            } else {
+                gameContainer.focus();
+            }
+        };
+
+        // Keep focus
+        gameContainer.addEventListener('blur', () => {
+            if (!isGameOver && startScreen.style.display === 'none') {
+                setTimeout(() => gameContainer.focus(), 50);
+            }
+        });
+
+        showStartScreen();
+
+    </script>
+    <script src="global.js"></script>
+</body>
+
+</html>
