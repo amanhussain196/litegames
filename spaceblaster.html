@@ -23,7 +23,7 @@
 
         body {
             font-family: 'Fredoka', sans-serif;
-            background-color: #000;
+            background: radial-gradient(circle at center, #1B2735 0%, #090A0F 100%);
             color: var(--text);
             display: flex;
             flex-direction: column;
@@ -34,34 +34,6 @@
             touch-action: none;
         }
 
-        /* Starfield background animation - Reduced Parallax Speed */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(white, rgba(255, 255, 255, .2) 2px, transparent 3px),
-                radial-gradient(white, rgba(255, 255, 255, .15) 1px, transparent 2px),
-                radial-gradient(white, rgba(255, 255, 255, .1) 2px, transparent 3px);
-            background-size: 550px 550px, 350px 350px, 250px 250px;
-            background-position: 0 0, 40px 60px, 130px 270px;
-            animation: starMove 60s linear infinite;
-            z-index: -1;
-        }
-
-        @keyframes starMove {
-            from {
-                background-position: 0 0, 40px 60px, 130px 270px;
-            }
-
-            to {
-                background-position: 0 550px, 40px 610px, 130px 820px;
-            }
-        }
-
         .game-container {
             position: relative;
             background: rgba(0, 0, 0, 0.5);
@@ -70,7 +42,6 @@
             box-shadow: 0 0 30px rgba(79, 193, 233, 0.3);
             border: 2px solid #4FC1E9;
             outline: none;
-            /* Remove focus outline */
         }
 
         canvas {

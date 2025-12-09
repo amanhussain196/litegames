@@ -550,20 +550,6 @@
         const mode = urlParams.get('mode');
 
         function isTouchDevice() {
-            return (('ontouchstart' in window) ||
-                (navigator.maxTouchPoints > 0) ||
-                (navigator.msMaxTouchPoints > 0));
-        }
-
-        if (mode === 'mobile' || isTouchDevice()) {
-            document.body.classList.add('mode-mobile');
-        } else if (mode === 'tv') {
-            document.body.classList.add('mode-tv');
-        }
-
-        function handleDpadInput(direction, event) {
-            if (event) event.preventDefault(); // Prevent default touch behavior
-
             // Simulate key press
             const keyEvent = { keyCode: 0 };
             if (direction === 'left') keyEvent.keyCode = 37;
