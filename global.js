@@ -73,10 +73,14 @@ const TimeManager = {
         // Check Auth & Initial Load
         if (this.sb) {
             try {
-                const { data: { user } } = await this.sb.auth.getUser();
+                const { data: { session } } = await this.sb.auth.getSession();
+                const user = session?.user;
                 this.user = user;
+
                 if (user) {
                     console.log("Logged in as:", user.email);
+                    // Force a fetch from remote to ensure we have the server time
+                    // This is critical to avoid using stale local data or default 5 mins
                     await this.fetchRemoteTime();
                 } else {
                     this.checkDailyResetLocal();

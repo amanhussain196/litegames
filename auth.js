@@ -159,6 +159,9 @@ const AuthManager = {
         localStorage.removeItem('user_name');
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('supabase.auth.token');
+        // Clear time data so it resets perfectly next time
+        localStorage.removeItem('tm_remaining_seconds');
+        localStorage.removeItem('tm_last_reset_date');
         window.location.reload();
     }
 };
