@@ -438,6 +438,37 @@
             flex-shrink: 0;
             padding-bottom: 40px;
         }
+
+        /* Compact layout for mobile mode */
+        body.mode-mobile .game-container {
+            max-width: 380px;
+            padding: 10px;
+        }
+
+        body.mode-mobile canvas {
+            border-width: 2px;
+        }
+
+        body.mode-mobile .dpad-btn {
+            width: 55px;
+            height: 55px;
+            font-size: 1.4rem;
+        }
+
+        body.mode-mobile .dpad-spacer {
+            width: 55px;
+            height: 55px;
+        }
+
+        body.mode-mobile .dpad-container {
+            margin-top: 15px;
+            gap: 8px;
+            padding-bottom: 10px;
+        }
+
+        body.mode-mobile .dpad-row {
+            gap: 8px;
+        }
     </style>
 </head>
 
@@ -446,10 +477,10 @@
     <div id="gameWrapper">
         <div class="ui-panel">
             <div style="display: flex; gap: 10px;">
-                <div class="score-box">?? <span id="score">0</span></div>
-                <div class="score-box">?? <span id="highScoreText">Player</span>: <span id="highScore">0</span></div>
+                <div class="score-box">🍎 <span id="score">0</span></div>
+                <div class="score-box">🏆 <span id="highScoreText">Player</span>: <span id="highScore">0</span></div>
             </div>
-            <button class="btn-fullscreen" onclick="toggleFullScreen()">? Full Screen</button>
+            <button class="btn-fullscreen" onclick="toggleFullScreen()">⛶ Full Screen</button>
         </div>
 
         <!-- Bonus Timer Bar -->
@@ -510,7 +541,7 @@
         </div>
     </div>
 
-    <a href="index.html" class="btn btn-home">?? BACK TO HOME</a>
+    <a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a>
     <p class="controls-hint">Use Arrow Keys to Move</p>
 
     <script>

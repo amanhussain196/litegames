@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1280, initial-scale=1">
     <title>litegames.fun | Fun for Everyone!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1115,6 +1115,16 @@
             if (mode === 'mobile') document.body.classList.add('mode-mobile');
             if (mode === 'tv') document.body.classList.add('mode-tv');
             // PC is default
+
+            // Update game links
+            const links = document.querySelectorAll('a.play-btn-small');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('http')) {
+                    const baseUrl = href.split('?')[0];
+                    link.setAttribute('href', mode === 'pc' ? baseUrl : `${baseUrl}?mode=${mode}`);
+                }
+            });
 
             // Toggle TV Legend
             const tvLegend = document.getElementById('tvLegend');
