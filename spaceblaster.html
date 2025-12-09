@@ -280,8 +280,8 @@
 
             init() {
                 try {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)(),
-                        this.ctx.resume();
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.ctx.resume();
                 } catch (e) {
                     console.warn("AudioContext not supported or failed to init", e);
                 }
@@ -502,7 +502,8 @@
         }
 
         function initStars() {
-            for (let i = 0; i < 50; i++) {
+            // Reduced star count for performance
+            for (let i = 0; i < 20; i++) {
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -570,7 +571,6 @@
 
             try {
                 frameCount++;
-
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 updateStars();

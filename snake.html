@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Snake | Man Games</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -368,8 +368,7 @@
         }
 
         /* Mobile Mode specific styles */
-        body.mode-mobile .dpad-container,
-        #gameWrapper:fullscreen .dpad-container {
+        body.mode-mobile .dpad-container {
             display: flex !important;
         }
 
@@ -438,37 +437,6 @@
             flex-shrink: 0;
             padding-bottom: 40px;
         }
-
-        /* Compact layout for mobile mode */
-        body.mode-mobile .game-container {
-            max-width: 380px;
-            padding: 10px;
-        }
-
-        body.mode-mobile canvas {
-            border-width: 2px;
-        }
-
-        body.mode-mobile .dpad-btn {
-            width: 55px;
-            height: 55px;
-            font-size: 1.4rem;
-        }
-
-        body.mode-mobile .dpad-spacer {
-            width: 55px;
-            height: 55px;
-        }
-
-        body.mode-mobile .dpad-container {
-            margin-top: 15px;
-            gap: 8px;
-            padding-bottom: 10px;
-        }
-
-        body.mode-mobile .dpad-row {
-            gap: 8px;
-        }
     </style>
 </head>
 
@@ -525,18 +493,18 @@
         <div id="dpad" class="dpad-container">
             <div class="dpad-row">
                 <button class="dpad-btn" onmousedown="handleDpadInput('up')"
-                    ontouchstart="handleDpadInput('up', event)">⬆️</button>
+                    ontouchstart="handleDpadInput('up', event)">▲</button>
             </div>
             <div class="dpad-row">
                 <button class="dpad-btn" onmousedown="handleDpadInput('left')"
-                    ontouchstart="handleDpadInput('left', event)">⬅️</button>
+                    ontouchstart="handleDpadInput('left', event)">◀</button>
                 <div class="dpad-spacer"></div>
                 <button class="dpad-btn" onmousedown="handleDpadInput('right')"
-                    ontouchstart="handleDpadInput('right', event)">➡️</button>
+                    ontouchstart="handleDpadInput('right', event)">▶</button>
             </div>
             <div class="dpad-row">
                 <button class="dpad-btn" onmousedown="handleDpadInput('down')"
-                    ontouchstart="handleDpadInput('down', event)">⬇️</button>
+                    ontouchstart="handleDpadInput('down', event)">▼</button>
             </div>
         </div>
     </div>
@@ -548,8 +516,15 @@
         // Check URL params for mode
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode');
+        if (mode === 'mobile') {
+            document.body.classList.add('mode-mobile');
+        } else if (mode === 'tv') {
+            document.body.classList.add('mode-tv');
+        }
 
-        function isTouchDevice() {
+        function handleDpadInput(direction, event) {
+            if (event) event.preventDefault(); // Prevent default touch behavior
+
             // Simulate key press
             const keyEvent = { keyCode: 0 };
             if (direction === 'left') keyEvent.keyCode = 37;
@@ -1163,7 +1138,6 @@
         // Keyboard Input
         document.addEventListener('keydown', changeDirection);
     </script>
-    <script src="global.js"></script>
 </body>
 
 </html>
