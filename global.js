@@ -59,7 +59,6 @@ const TimeManager = {
         // Init Supabase if available
         try {
             if (window.supabase && window.supabase.createClient) {
-                // Check if already initialized globally (e.g. by auth.js)
                 if (typeof supabase !== 'undefined') {
                     this.sb = supabase;
                 } else {
@@ -70,6 +69,8 @@ const TimeManager = {
             console.warn("Supabase init failed, falling back to local:", e);
         }
 
+        this.createUI();
+
         // Check Auth & Initial Load
         if (this.sb) {
             try {
@@ -79,10 +80,13 @@ const TimeManager = {
 
                 if (user) {
                     console.log("Logged in as:", user.email);
-                    // Force a fetch from remote to ensure we have the server time
-                    // This is critical to avoid using stale local data or default 5 mins
+                    // 1. Fetch Server Time (Authority)
                     await this.fetchRemoteTime();
+
+                    // 2. Start Sync Loop (Client -> Server)
+                    this.syncInterval = setInterval(() => this.syncTimeRemote(), 30000);
                 } else {
+                    // Not logged in: Local Authority
                     this.checkDailyResetLocal();
                 }
             } catch (err) {
@@ -93,29 +97,74 @@ const TimeManager = {
             this.checkDailyResetLocal();
         }
 
-        this.createUI();
+        // Start the countdown timer (visuals)
         this.startTimer();
 
-        // Save locally every 5s
+        // Always save to local storage as a backup/cache
         this.saveInterval = setInterval(() => this.saveTimeLocal(), 5000);
 
-        // Sync to Server every 30s if logged in
-        if (this.user) {
-            this.syncInterval = setInterval(() => this.syncTimeRemote(), 30000);
-        }
-
-        // Handle tab visibility
+        // Handle Lifecycle Events
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.saveTimeLocal();
-                if (this.user) this.syncTimeRemote();
+                if (this.user) {
+                    this.syncTimeRemote(true); // Force sync on hide
+                }
             }
         });
 
-        // Handle unload
         window.addEventListener('beforeunload', () => {
             this.saveTimeLocal();
+            if (this.user) {
+                this.saveOnExit();
+            }
         });
+
+        // Handle cross-tab updates (e.g. from Shop coupon redemption)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'tm_remaining_seconds' && e.newValue) {
+                const newSecs = parseInt(e.newValue);
+                if (!isNaN(newSecs) && newSecs !== this.remainingSeconds) {
+                    console.log("Time updated from another tab/script:", newSecs);
+                    this.remainingSeconds = newSecs;
+                    this.updateUIDisplay();
+                }
+            }
+        });
+    },
+
+    saveOnExit: function () {
+        if (!this.user) return;
+
+        try {
+            const sessionStr = localStorage.getItem('supabase.auth.token');
+            if (!sessionStr) return;
+
+            const session = JSON.parse(sessionStr);
+            const token = session.access_token;
+            if (!token) return;
+
+            const url = `${this.SUPABASE_URL}/rest/v1/users_profile?id=eq.${this.user.id}`;
+            const body = JSON.stringify({
+                remaining_seconds: this.remainingSeconds,
+                last_reset_date: new Date().toDateString()
+            });
+
+            fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': this.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: body,
+                keepalive: true
+            }).catch(err => console.error("Exit sync failed:", err));
+
+        } catch (e) {
+            console.error("Error in saveOnExit:", e);
+        }
     },
 
 
@@ -192,19 +241,24 @@ const TimeManager = {
 
         const today = new Date().toDateString();
 
-        const { error } = await this.sb
+        const { error, count } = await this.sb
             .from('users_profile')
             .update({
                 remaining_seconds: this.remainingSeconds,
                 last_reset_date: today
             })
-            .eq('id', this.user.id);
+            .eq('id', this.user.id)
+            .select('id', { count: 'exact' }); // Get count to check if row existed
 
-        if (!error) {
+        if (error) {
+            console.error("Error syncing time (Supabase Code " + error.code + "):", error.message);
+        } else if (count === 0) {
+            // This is the critical case: No row found to update
+            console.error("Sync failed: No profile row found for user " + this.user.id);
+            // Optional: Try to recover? (requires username)
+        } else {
             this.pendingSync = false;
             // console.log("Time synced to server.");
-        } else {
-            console.error("Error syncing time:", error);
         }
     },
 

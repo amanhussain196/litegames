@@ -201,7 +201,25 @@
                 }
 
                 // 7. Success!
-                messageEl.innerHTML = `✅ <b>Success!</b> ${coupon.description}`;
+                let remainingMsg = "";
+                if (coupon.max_uses > 0) {
+                    // We already fetched 'count' in step 4, but it's scoped. 
+                    // Let's rely on the DB or just re-calculate for display if needed, 
+                    // but simpler is to trust the logic: we passed the check.
+                    // To be precise, let's fetch the new count or just pass the info if we have it?
+                    // We can't access 'count' here because of block scoping (const).
+                    // So let's count again for the message? Or just move 'count' declaration up.
+                    // Moving declaration is invasive. I'll just do a quick count since UX speed allows it.
+                    const { count: newCount } = await supabase
+                        .from('coupon_redemptions')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('coupon_id', coupon.id);
+
+                    const left = coupon.max_uses - newCount;
+                    remainingMsg = ` (${left} left)`;
+                }
+
+                messageEl.innerHTML = `✅ <b>Success!</b> ${coupon.description}${remainingMsg}`;
                 messageEl.style.color = "green";
 
                 // Optional: Clear input

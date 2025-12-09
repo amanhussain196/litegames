@@ -154,8 +154,21 @@ const AuthManager = {
         }
     },
 
-    logout() {
-        supabase.auth.signOut();
+    async logout() {
+        // Attempt to sync time before logging out
+        if (typeof TimeManager !== 'undefined' && TimeManager.user) {
+            console.log("Syncing time before logout...");
+            try {
+                // Force sync and wait up to 1 second
+                const syncPromise = TimeManager.syncTimeRemote(true);
+                const timeoutPromise = new Promise(resolve => setTimeout(resolve, 1000));
+                await Promise.race([syncPromise, timeoutPromise]);
+            } catch (e) {
+                console.warn("Logout sync failed:", e);
+            }
+        }
+
+        await supabase.auth.signOut();
         localStorage.removeItem('user_name');
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('supabase.auth.token');

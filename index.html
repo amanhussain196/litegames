@@ -724,9 +724,30 @@
             </button>
             <button id="muteBtn" class="btn-mute" onclick="MusicManager.toggleMute()"
                 aria-label="Toggle Mute">🔊</button>
-            <a href="login.html" class="btn-login">JOIN NOW</a>
+            <a id="loginBtn" href="login.html" class="btn-login">JOIN NOW</a>
+            <button id="logoutBtn" class="btn-login" style="display:none; background: #ff4757;"
+                onclick="AuthManager.logout()">LOGOUT</button>
         </div>
     </header>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = localStorage.getItem('user_name');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (user) {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (logoutBtn) {
+                    logoutBtn.style.display = 'inline-block';
+                    logoutBtn.textContent = 'LOGOUT (' + user + ')';
+                }
+            } else {
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+            }
+        });
+    </script>
 
     <section class="hero">
         <div class="hero-content">
@@ -1263,29 +1284,9 @@
                     if (firstOption) firstOption.focus();
                 }, 100);
             }
-
-            const isLoggedIn = localStorage.getItem('is_logged_in');
-            const userName = localStorage.getItem('user_name');
-
-            if (isLoggedIn === 'true' && userName) {
-                const loginBtn = document.querySelector('.btn-login');
-                if (loginBtn) {
-                    loginBtn.textContent = `Hi, ${userName}`;
-                    loginBtn.href = '#';
-                    loginBtn.style.background = 'var(--secondary)';
-                    loginBtn.title = 'Click to Logout';
-                    loginBtn.onclick = (e) => {
-                        e.preventDefault();
-                        if (confirm('Log out?')) {
-                            localStorage.removeItem('is_logged_in');
-                            localStorage.removeItem('user_name');
-                            window.location.reload();
-                        }
-                    };
-                }
-            }
         });
     </script>
+    <script src="auth.js"></script>
     <script src="global.js"></script>
 </body>
 
