@@ -43,40 +43,171 @@ const TimeManager = {
     remainingSeconds: 0,
     timerInterval: null,
     saveInterval: null,
+    syncInterval: null,
     DAILY_LIMIT: 300, // 5 minutes
     AD_REWARD: 1200, // 20 minutes
     AD_DURATION: 30, // 30 seconds
 
-    init: function () {
-        this.checkDailyReset();
+    // Supabase
+    sb: null,
+    user: null,
+    pendingSync: false,
+    SUPABASE_URL: 'https://rydsgfbhbhenquxqvdct.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5ZHNnZmJoYmhlbnF1eHF2ZGN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwOTgyMDAsImV4cCI6MjA4MDY3NDIwMH0.nN6MvxbJvUaxEmL-xCk-9DcRKGqWDHUw09xFid9qgQU',
+
+    init: async function () {
+        // Init Supabase if available
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                // Check if already initialized globally (e.g. by auth.js)
+                if (typeof supabase !== 'undefined') {
+                    this.sb = supabase;
+                } else {
+                    this.sb = window.supabase.createClient(this.SUPABASE_URL, this.SUPABASE_ANON_KEY);
+                }
+            }
+        } catch (e) {
+            console.warn("Supabase init failed, falling back to local:", e);
+        }
+
+        // Check Auth & Initial Load
+        if (this.sb) {
+            try {
+                const { data: { user } } = await this.sb.auth.getUser();
+                this.user = user;
+                if (user) {
+                    console.log("Logged in as:", user.email);
+                    await this.fetchRemoteTime();
+                } else {
+                    this.checkDailyResetLocal();
+                }
+            } catch (err) {
+                console.warn("Supabase auth check failed:", err);
+                this.checkDailyResetLocal();
+            }
+        } else {
+            this.checkDailyResetLocal();
+        }
+
         this.createUI();
         this.startTimer();
 
-        // Save time every 5 seconds to avoid excessive writes
-        this.saveInterval = setInterval(() => this.saveTime(), 5000);
+        // Save locally every 5s
+        this.saveInterval = setInterval(() => this.saveTimeLocal(), 5000);
 
-        // Handle tab visibility to pause/resume (optional, but good for accuracy)
+        // Sync to Server every 30s if logged in
+        if (this.user) {
+            this.syncInterval = setInterval(() => this.syncTimeRemote(), 30000);
+        }
+
+        // Handle tab visibility
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                this.saveTime();
+                this.saveTimeLocal();
+                if (this.user) this.syncTimeRemote();
             }
+        });
+
+        // Handle unload
+        window.addEventListener('beforeunload', () => {
+            this.saveTimeLocal();
         });
     },
 
-    checkDailyReset: function () {
+
+
+    finishAd: function () {
+        const newTime = this.remainingSeconds + this.AD_REWARD;
+        this.updateTime(newTime);
+        this.updateUIDisplay();
+
+        document.getElementById('tm-ad-modal').style.display = 'none';
+        document.getElementById('tm-block-modal').style.display = 'none';
+
+        // No alert as requested
+    },
+
+    // --- Local Logic ---
+    checkDailyResetLocal: function () {
         const lastReset = localStorage.getItem('tm_last_reset_date');
         const today = new Date().toDateString();
         const savedTime = localStorage.getItem('tm_remaining_seconds');
 
         if (lastReset !== today) {
-            // New day, reset to daily limit
             this.remainingSeconds = this.DAILY_LIMIT;
             localStorage.setItem('tm_last_reset_date', today);
-            this.saveTime();
+            this.saveTimeLocal();
         } else {
-            // Same day, load saved time
             this.remainingSeconds = savedTime ? parseInt(savedTime) : this.DAILY_LIMIT;
         }
+    },
+
+    saveTimeLocal: function () {
+        localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+        this.pendingSync = true;
+    },
+
+    // --- Remote Logic ---
+    fetchRemoteTime: async function () {
+        if (!this.user || !this.sb) return;
+
+        const { data, error } = await this.sb
+            .from('users_profile')
+            .select('remaining_seconds, last_reset_date')
+            .eq('id', this.user.id)
+            .single();
+
+        if (data) {
+            const today = new Date().toDateString();
+
+            // Check Server Reset Date
+            if (data.last_reset_date !== today) {
+                // New Day on Server -> Reset to limit (or keep if default is null?)
+                // If it's a new day, we reset.
+                console.log("New day detected from server. Resetting.");
+                this.remainingSeconds = this.DAILY_LIMIT;
+                // We should update server immediately to mark today as visited
+                this.syncTimeRemote(true);
+            } else {
+                // Same day, use server time
+                // Handle case where server says null (new user) -> use default
+                this.remainingSeconds = data.remaining_seconds != null ? data.remaining_seconds : this.DAILY_LIMIT;
+            }
+            // Update local storage to match server (trust server)
+            localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+            localStorage.setItem('tm_last_reset_date', today);
+        } else {
+            // Profile might not exist yet, rely on local for now
+            this.checkDailyResetLocal();
+        }
+    },
+
+    syncTimeRemote: async function (force = false) {
+        if (!this.user || !this.sb) return;
+        if (!this.pendingSync && !force) return;
+
+        const today = new Date().toDateString();
+
+        const { error } = await this.sb
+            .from('users_profile')
+            .update({
+                remaining_seconds: this.remainingSeconds,
+                last_reset_date: today
+            })
+            .eq('id', this.user.id);
+
+        if (!error) {
+            this.pendingSync = false;
+            // console.log("Time synced to server.");
+        } else {
+            console.error("Error syncing time:", error);
+        }
+    },
+
+    updateTime: function (newSeconds) {
+        this.remainingSeconds = newSeconds;
+        this.saveTimeLocal();
+        if (this.user) this.syncTimeRemote();
     },
 
     startTimer: function () {
@@ -86,6 +217,7 @@ const TimeManager = {
             if (this.remainingSeconds > 0) {
                 this.remainingSeconds--;
                 this.updateUIDisplay();
+                this.pendingSync = true; // Mark dirty
 
                 if (this.remainingSeconds <= 0) {
                     this.handleTimeUp();
@@ -99,7 +231,8 @@ const TimeManager = {
     },
 
     saveTime: function () {
-        localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+        // Legacy wrapper if called externally
+        this.saveTimeLocal();
     },
 
     formatTime: function (seconds) {
@@ -366,16 +499,7 @@ const TimeManager = {
         }, 1000);
     },
 
-    finishAd: function () {
-        this.remainingSeconds += this.AD_REWARD;
-        this.saveTime();
-        this.updateUIDisplay();
 
-        document.getElementById('tm-ad-modal').style.display = 'none';
-        document.getElementById('tm-block-modal').style.display = 'none';
-
-        // No alert as requested
-    }
 };
 
 // Auto-initialize when DOM is ready

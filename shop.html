@@ -172,19 +172,32 @@
 
                 // Special handling for Minutes Coupon
                 if (coupon.code === 'ADD500') {
-                    const DAILY_LIMIT = 300; // Match global.js
+                    const DAILY_LIMIT = 300;
                     const ADDED_SECONDS = 500 * 60;
-                    const today = new Date().toDateString();
-                    const lastReset = localStorage.getItem('tm_last_reset_date');
-                    let currentSeconds = parseInt(localStorage.getItem('tm_remaining_seconds') || '0');
 
-                    // Apply daily reset logic if needed so we add to the correct base
-                    if (lastReset !== today) {
-                        currentSeconds = DAILY_LIMIT;
-                        localStorage.setItem('tm_last_reset_date', today);
-                    }
+                    // Fetch current server time to be accurate
+                    const { data: profile } = await supabase
+                        .from('users_profile')
+                        .select('remaining_seconds')
+                        .eq('id', user.id)
+                        .single();
 
-                    localStorage.setItem('tm_remaining_seconds', currentSeconds + ADDED_SECONDS);
+                    let currentSeconds = profile && profile.remaining_seconds !== null
+                        ? parseInt(profile.remaining_seconds)
+                        : parseInt(localStorage.getItem('tm_remaining_seconds') || '0');
+
+                    const newTotal = currentSeconds + ADDED_SECONDS;
+
+                    // Update Supabase
+                    const { error: updateError } = await supabase
+                        .from('users_profile')
+                        .update({ remaining_seconds: newTotal })
+                        .eq('id', user.id);
+
+                    if (updateError) console.error("Error syncing time:", updateError);
+
+                    // Update LocalStorage for immediate feedback if they switch tabs/pages
+                    localStorage.setItem('tm_remaining_seconds', newTotal);
                 }
 
                 // 7. Success!
