@@ -175,6 +175,8 @@ const AuthManager = {
         // Clear time data so it resets perfectly next time
         localStorage.removeItem('tm_remaining_seconds');
         localStorage.removeItem('tm_last_reset_date');
+        localStorage.removeItem('gm_gold_coins');
+        localStorage.removeItem('gm_daily_earned');
         window.location.reload();
     }
 };

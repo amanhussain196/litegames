@@ -39,6 +39,151 @@ const ZoomManager = {
 };
 
 
+const GoldManager = {
+    coins: 0,
+    dailyEarned: 0,
+    DAILY_CAP: 15,
+    COINS_PER_MINUTE: 5, // Passive income rate
+    pendingSync: false,
+
+    // UI Elements
+    coinTextEl: null,
+
+    init: async function () {
+        // UI is handled by TimeManager invoking setupUI
+    },
+
+    // Called by TimeManager after it sets up the HUD
+    setupUI: function (container) {
+        // Coin Icon (Yellow Circle with C or similar, or SVG)
+        const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 10px; margin-right: 4px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));"><circle cx="12" cy="12" r="9"></circle><path d="M12 16v-8M10 10l4 4M14 10l-4 4" stroke-opacity="0.0" stroke-width="0"></path><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#B8860B" font-size="12" font-weight="bold" stroke="none" style="font-family: sans-serif;">$</text></svg>`;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.innerHTML = `<span id="tm-gold-wrapper">${coinIcon}<span id="tm-gold-text">0</span></span>`;
+
+        // Add divider if needed
+        const divider = document.createElement('div');
+        divider.style.width = '1px';
+        divider.style.height = '16px';
+        divider.style.background = '#ccc';
+        divider.style.margin = '0 8px';
+
+        container.appendChild(divider);
+        container.appendChild(wrapper);
+
+        this.coinTextEl = document.getElementById('tm-gold-text');
+
+        // Small delay to ensure DOM is ready if created dynamically
+        setTimeout(() => this.updateUIDisplay(), 0);
+    },
+
+    loadFromProfile: function (profileData) {
+        if (profileData) {
+            this.coins = profileData.gold_coins != null ? parseInt(profileData.gold_coins) : 0;
+            this.dailyEarned = profileData.daily_coins_earned != null ? parseInt(profileData.daily_coins_earned) : 0;
+        } else {
+            // Try local storage
+            const saved = localStorage.getItem('gm_gold_coins');
+            const savedDaily = localStorage.getItem('gm_daily_earned');
+            this.coins = saved ? parseInt(saved) : 0;
+            this.dailyEarned = savedDaily ? parseInt(savedDaily) : 0;
+        }
+        this.updateUIDisplay();
+        this.saveTxLocal(); // Ensure consistency
+    },
+
+    resetDaily: function () {
+        this.dailyEarned = 0;
+        this.saveTxLocal();
+        this.pendingSync = true;
+        console.log("Gold Manager: Daily limit reset.");
+    },
+
+    addCoins: function (amount) {
+        if (!localStorage.getItem('is_logged_in')) {
+            console.log("Not logged in. Cannot earn gold.");
+            return;
+        }
+
+        if (this.dailyEarned >= this.DAILY_CAP) {
+            console.log("Daily gold cap reached.");
+            return;
+        }
+
+        const allowed = this.DAILY_CAP - this.dailyEarned;
+        const actualAdd = Math.min(amount, allowed);
+
+        if (actualAdd > 0) {
+            this.coins += actualAdd;
+            this.dailyEarned += actualAdd;
+            this.saveTxLocal();
+            this.pendingSync = true;
+            this.updateUIDisplay();
+            console.log("Added " + actualAdd + " coins. Total: " + this.coins);
+
+            // Animation
+            if (this.coinTextEl) {
+                this.coinTextEl.style.transition = 'none'; // Reset
+                this.coinTextEl.style.color = '#FFD700';
+                this.coinTextEl.style.transform = 'scale(1.5)';
+
+                // Force Reflow
+                void this.coinTextEl.offsetWidth;
+
+                this.coinTextEl.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                this.coinTextEl.style.transform = 'scale(1)';
+
+                setTimeout(() => {
+                    this.coinTextEl.style.color = ''; // Reset to inherited
+                }, 300);
+            }
+        }
+    },
+
+    saveTxLocal: function () {
+        localStorage.setItem('gm_gold_coins', this.coins);
+        localStorage.setItem('gm_daily_earned', this.dailyEarned);
+    },
+
+    updateUIDisplay: function () {
+        if (!this.coinTextEl) this.coinTextEl = document.getElementById('tm-gold-text');
+        const wrapper = document.getElementById('tm-gold-wrapper');
+
+        if (localStorage.getItem('is_logged_in') === 'true') {
+            if (this.coinTextEl) {
+                this.coinTextEl.textContent = this.coins.toLocaleString();
+            }
+            if (wrapper) {
+                wrapper.title = `Daily limit: ${this.dailyEarned}/${this.DAILY_CAP}`;
+                wrapper.style.cursor = 'default';
+                wrapper.onclick = null;
+            }
+        } else {
+            // Guest Mode
+            if (wrapper) {
+                const shinyIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; filter: drop-shadow(0 0 3px gold);"><circle cx="12" cy="12" r="9"></circle><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#B8860B" font-size="12" font-weight="bold" stroke="none" style="font-family: sans-serif;">$</text></svg>`;
+
+                wrapper.innerHTML = `${shinyIcon}<span style="font-size: 0.8rem; color: #555; cursor: pointer; text-decoration: underline; font-weight: bold;">Log in to earn gold</span>`;
+
+                wrapper.style.display = 'inline-flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.onclick = () => window.location.href = 'login.html';
+                wrapper.title = "Login required to earn gold coins";
+            }
+        }
+    },
+
+    getPayload: function () {
+        return {
+            gold_coins: this.coins,
+            daily_coins_earned: this.dailyEarned
+        };
+    }
+};
+
+
 const TimeManager = {
     remainingSeconds: 0,
     timerInterval: null,
@@ -47,6 +192,10 @@ const TimeManager = {
     DAILY_LIMIT: 300, // 5 minutes
     AD_REWARD: 1200, // 20 minutes
     AD_DURATION: 30, // 30 seconds
+
+    // Passive Income Logic
+    passiveTicker: 0,
+
 
     // Supabase
     sb: null,
@@ -92,9 +241,11 @@ const TimeManager = {
             } catch (err) {
                 console.warn("Supabase auth check failed:", err);
                 this.checkDailyResetLocal();
+                GoldManager.loadFromProfile(null);
             }
         } else {
             this.checkDailyResetLocal();
+            GoldManager.loadFromProfile(null);
         }
 
         // Start the countdown timer (visuals)
@@ -147,7 +298,9 @@ const TimeManager = {
             const url = `${this.SUPABASE_URL}/rest/v1/users_profile?id=eq.${this.user.id}`;
             const body = JSON.stringify({
                 remaining_seconds: this.remainingSeconds,
-                last_reset_date: new Date().toDateString()
+                last_reset_date: new Date().toDateString(),
+                gold_coins: GoldManager.coins,
+                daily_coins_earned: GoldManager.dailyEarned
             });
 
             fetch(url, {
@@ -206,8 +359,9 @@ const TimeManager = {
 
         const { data, error } = await this.sb
             .from('users_profile')
-            .select('remaining_seconds, last_reset_date')
+            .select('remaining_seconds, last_reset_date, gold_coins, daily_coins_earned')
             .eq('id', this.user.id)
+
             .single();
 
         if (data) {
@@ -221,32 +375,46 @@ const TimeManager = {
                 this.remainingSeconds = this.DAILY_LIMIT;
                 // We should update server immediately to mark today as visited
                 this.syncTimeRemote(true);
+
+                // Also reset gold daily limit
+                GoldManager.resetDaily();
             } else {
                 // Same day, use server time
                 // Handle case where server says null (new user) -> use default
                 this.remainingSeconds = data.remaining_seconds != null ? data.remaining_seconds : this.DAILY_LIMIT;
             }
+
+            // Integrate Gold Manager Load
+            GoldManager.loadFromProfile(data);
+
             // Update local storage to match server (trust server)
             localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
             localStorage.setItem('tm_last_reset_date', today);
         } else {
             // Profile might not exist yet, rely on local for now
             this.checkDailyResetLocal();
+            GoldManager.loadFromProfile(null);
         }
     },
 
     syncTimeRemote: async function (force = false) {
         if (!this.user || !this.sb) return;
-        if (!this.pendingSync && !force) return;
+        if (!this.pendingSync && !GoldManager.pendingSync && !force) return;
 
         const today = new Date().toDateString();
 
+        // Combine payloads
+        const updates = {
+            remaining_seconds: this.remainingSeconds,
+            last_reset_date: today,
+            // Only add gold if it changed or verifying
+            ...GoldManager.getPayload()
+        };
+
+
         const { error, count } = await this.sb
             .from('users_profile')
-            .update({
-                remaining_seconds: this.remainingSeconds,
-                last_reset_date: today
-            })
+            .update(updates)
             .eq('id', this.user.id)
             .select('id', { count: 'exact' }); // Get count to check if row existed
 
@@ -258,6 +426,7 @@ const TimeManager = {
             // Optional: Try to recover? (requires username)
         } else {
             this.pendingSync = false;
+            GoldManager.pendingSync = false;
             // console.log("Time synced to server.");
         }
     },
@@ -276,6 +445,13 @@ const TimeManager = {
                 this.remainingSeconds--;
                 this.updateUIDisplay();
                 this.pendingSync = true; // Mark dirty
+
+                // Passive Income for Gold
+                this.passiveTicker++;
+                if (this.passiveTicker >= 60) {
+                    GoldManager.addCoins(GoldManager.COINS_PER_MINUTE);
+                    this.passiveTicker = 0;
+                }
 
                 if (this.remainingSeconds <= 0) {
                     this.handleTimeUp();
@@ -461,6 +637,14 @@ const TimeManager = {
             <button class="tm-add-btn" id="tm-add-btn" title="Watch Ad for +20 mins">+</button>
         `;
 
+        // Append Gold UI
+        const contentDiv = document.createElement('div');
+        contentDiv.style.display = 'contents'; // Wrapper to not break flex
+        timerContainer.appendChild(contentDiv);
+        GoldManager.setupUI(timerContainer);
+
+        // Try to find header actions container
+
         // Try to find header actions container
         const zoomBtn = document.querySelector('.btn-zoom');
         if (zoomBtn && zoomBtn.parentElement) {
@@ -565,8 +749,10 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         ZoomManager.init();
         TimeManager.init();
+        GoldManager.init();
     });
 } else {
     ZoomManager.init();
     TimeManager.init();
+    GoldManager.init();
 }
