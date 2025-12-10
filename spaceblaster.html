@@ -510,12 +510,13 @@
 
         function initStars() {
             // Reduced star count for performance
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 10; i++) {
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
                     size: Math.random() * 2,
-                    speed: Math.random() * 1 + 0.2
+                    speed: Math.random() * 1 + 0.2,
+                    alpha: Math.random() * 0.5 + 0.3
                 });
             }
         }
@@ -1327,9 +1328,8 @@
         }
 
         function drawStars() {
-            ctx.fillStyle = '#FFF';
             stars.forEach(star => {
-                ctx.globalAlpha = Math.random() * 0.5 + 0.5;
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -1541,15 +1541,17 @@
 
         canvas.addEventListener('mousemove', e => {
             const rect = canvas.getBoundingClientRect();
-            mouseX = e.clientX - rect.left;
+            const scaleX = canvas.width / rect.width;
+            mouseX = (e.clientX - rect.left) * scaleX;
         });
         canvas.addEventListener('mousedown', () => isAutoShooting = !isAutoShooting);
         canvas.addEventListener('mouseup', () => isMouseDown = false);
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
             const touch = e.touches[0];
-            mouseX = touch.clientX - rect.left;
+            mouseX = (touch.clientX - rect.left) * scaleX;
         }, { passive: false });
         const fireBtn = document.getElementById('fireBtn');
         fireBtn.addEventListener('touchstart', (e) => {
