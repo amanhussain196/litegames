@@ -80,7 +80,17 @@ const GoldManager = {
     },
 
     loadFromProfile: function (profileData) {
-        if (profileData) {
+        // Robust Sync: Check if we have unsynced local changes
+        const pendingSync = localStorage.getItem('gm_pending_sync') === 'true';
+
+        if (pendingSync) {
+            console.log("Gold Manager: Found unsynced local changes. Prioritizing local data.");
+            const saved = localStorage.getItem('gm_gold_coins');
+            const savedDaily = localStorage.getItem('gm_daily_earned');
+            this.coins = saved ? parseInt(saved) : 0;
+            this.dailyEarned = savedDaily ? parseInt(savedDaily) : 0;
+            this.pendingSync = true; // Force sync next cycle
+        } else if (profileData) {
             this.coins = profileData.gold_coins != null ? parseInt(profileData.gold_coins) : 0;
             this.dailyEarned = profileData.daily_coins_earned != null ? parseInt(profileData.daily_coins_earned) : 0;
         } else {
@@ -92,6 +102,11 @@ const GoldManager = {
         }
         this.updateUIDisplay();
         this.saveTxLocal(); // Ensure consistency
+    },
+
+    markSynced: function () {
+        this.pendingSync = false;
+        localStorage.removeItem('gm_pending_sync');
     },
 
     resetDaily: function () {
@@ -145,6 +160,8 @@ const GoldManager = {
     saveTxLocal: function () {
         localStorage.setItem('gm_gold_coins', this.coins);
         localStorage.setItem('gm_daily_earned', this.dailyEarned);
+        // Mark as needing sync
+        localStorage.setItem('gm_pending_sync', 'true');
     },
 
     updateUIDisplay: function () {
@@ -387,9 +404,22 @@ const TimeManager = {
             // Integrate Gold Manager Load
             GoldManager.loadFromProfile(data);
 
-            // Update local storage to match server (trust server)
-            localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
-            localStorage.setItem('tm_last_reset_date', today);
+            // Update local storage to match server (trust server, unless local forced override)
+            if (!GoldManager.pendingSync) {
+                localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+                localStorage.setItem('tm_last_reset_date', today);
+            } else {
+                // If GoldManager forced a local override, it implies our session ended abnormally.
+                // We should trust LOCAL time as well, as it likely progressed with the coins.
+                const localTime = localStorage.getItem('tm_remaining_seconds');
+                if (localTime) {
+                    this.remainingSeconds = parseInt(localTime);
+                    console.log("Restored local time: " + this.remainingSeconds);
+                }
+
+                console.log("Syncing local override up to server...");
+                this.syncTimeRemote(true);
+            }
         } else {
             // Profile might not exist yet, rely on local for now
             this.checkDailyResetLocal();
@@ -426,7 +456,7 @@ const TimeManager = {
             // Optional: Try to recover? (requires username)
         } else {
             this.pendingSync = false;
-            GoldManager.pendingSync = false;
+            GoldManager.markSynced();
             // console.log("Time synced to server.");
         }
     },
@@ -446,12 +476,12 @@ const TimeManager = {
                 this.updateUIDisplay();
                 this.pendingSync = true; // Mark dirty
 
-                // Passive Income for Gold
-                this.passiveTicker++;
-                if (this.passiveTicker >= 60) {
-                    GoldManager.addCoins(GoldManager.COINS_PER_MINUTE);
-                    this.passiveTicker = 0;
-                }
+                // Passive Income for Gold - Disabled
+                // this.passiveTicker++;
+                // if (this.passiveTicker >= 60) {
+                //     GoldManager.addCoins(GoldManager.COINS_PER_MINUTE);
+                //     this.passiveTicker = 0;
+                // }
 
                 if (this.remainingSeconds <= 0) {
                     this.handleTimeUp();

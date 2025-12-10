@@ -454,8 +454,8 @@
 
         <!-- Bonus Timer Bar -->
         <div id="bonus-container"
-            style="width: 500px; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 10px; display: none; overflow: hidden;">
-            <div id="bonus-bar" style="width: 100%; height: 100%; background: #FFD700; transition: width 0.1s linear;">
+            style="width: 100%; max-width: 500px; height: 10px; background: rgba(255,255,255,0.5); border-radius: 5px; margin-bottom: 10px; display: none; overflow: hidden;">
+            <div id="bonus-bar" style="width: 100%; height: 100%; background: #00b894; transition: width 0.1s linear;">
             </div>
         </div>
 
@@ -510,7 +510,7 @@
         </div>
     </div>
 
-    <a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a>
+    <a href="#" class="btn btn-home" onclick="goHome(event)">🏠 BACK TO HOME</a>
     <p class="controls-hint">Use Arrow Keys to Move</p>
 
     <script>
@@ -652,6 +652,7 @@
         const bonusDuration = 7000;
         let bonusStartTime = 0;
         let bonusTimerInterval;
+        let foodsSinceLastGold = 0;
 
         // Initialize display
         loadHighScore();
@@ -704,6 +705,7 @@
             modal.style.display = 'none';
             nameInput.style.display = 'none';
             nameInput.value = '';
+            foodsSinceLastGold = 0;
 
             clearBonus();
 
@@ -745,24 +747,48 @@
         }
 
         function placeFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
-            };
+            let isGold = false;
+            // 2.5% chance or forced after 15 non-gold foods
+            if (Math.random() < 0.025 || foodsSinceLastGold >= 15) {
+                isGold = true;
+                foodsSinceLastGold = 0;
+            } else {
+                foodsSinceLastGold++;
+            }
 
-            // Don't spawn on snake or walls
-            for (let part of snake) {
-                if (part.x === food.x && part.y === food.y) {
-                    placeFood();
-                    return;
+            let valid = false;
+            let fx, fy;
+
+            // Try to find a valid position
+            while (!valid) {
+                fx = Math.floor(Math.random() * tileCount);
+                fy = Math.floor(Math.random() * tileCount);
+                valid = true;
+
+                // Check snake collision
+                for (let part of snake) {
+                    if (part.x === fx && part.y === fy) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                // Check wall collision
+                if (valid) {
+                    for (let w of walls) {
+                        if (w.x === fx && w.y === fy) {
+                            valid = false;
+                            break;
+                        }
+                    }
                 }
             }
-            for (let w of walls) {
-                if (w.x === food.x && w.y === food.y) {
-                    placeFood();
-                    return;
-                }
-            }
+
+            food = {
+                x: fx,
+                y: fy,
+                type: isGold ? 'gold' : 'normal'
+            };
         }
 
         function spawnBonus() {
@@ -1009,6 +1035,9 @@
                 score += 10;
                 scoreEl.textContent = score;
                 fruitsEaten++;
+                if (typeof GoldManager !== 'undefined' && food.type === 'gold') {
+                    GoldManager.addCoins(1);
+                }
                 placeFood();
                 if (fruitsEaten % fruitsForBonus === 0) spawnBonus();
                 if (currentSpeed > minSpeed) currentSpeed -= speedStep;
@@ -1032,6 +1061,11 @@
             SoundManager.playDie();
             isGameOver = true;
             finalScoreEl.textContent = score;
+
+            // Sync Time & Gold on Game Over
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
 
             // Explosion effect
             isExploding = true;
@@ -1119,14 +1153,30 @@
             }
 
             // Draw Food
-            ctx.fillStyle = '#ff7675'; // var(--food)
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
-            ctx.fill();
+            if (food.type === 'gold') {
+                // Gold Coin Appearance
+                ctx.fillStyle = '#FFD700'; // Gold
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Dollar sign or shine
+                ctx.fillStyle = '#B8860B';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2 + 1);
+            } else {
+                // Normal Food
+                ctx.fillStyle = '#ff7675'; // var(--food)
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             // Draw Bonus Food
             if (bonusFood) {
-                ctx.fillStyle = '#FFE66D'; // var(--accent)
+                ctx.fillStyle = '#00b894'; // Green
                 ctx.beginPath();
                 ctx.arc(bonusFood.x * gridSize + gridSize / 2, bonusFood.y * gridSize + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
                 ctx.fill();
@@ -1138,6 +1188,15 @@
 
         // Keyboard Input
         document.addEventListener('keydown', changeDirection);
+
+        async function goHome(event) {
+            event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                // Sync data before leaving
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
     </script>
     <script src="global.js"></script>
 </body>
