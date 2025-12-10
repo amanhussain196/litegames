@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #8D6E63;
@@ -146,6 +147,24 @@
         .hole.whacked .mole {
             background: #FF5252;
             transform: scale(0.9);
+        }
+
+        /* Golden Mole Styles */
+        .mole.golden {
+            background: #FFD700;
+            /* Gold */
+            box-shadow: 0 0 15px #FFD700;
+        }
+
+        .mole.golden::after {
+            content: '$';
+            /* Dollar sign eyes */
+            color: #B8860B;
+            font-size: 35px;
+        }
+
+        .mole.golden::before {
+            background: #FFF176;
         }
 
         /* Modal */
@@ -309,7 +328,7 @@
 
 <body>
 
-    <a href="index.html" class="back-btn">← Back</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <h1>Whack-a-Mole</h1>
 
@@ -348,6 +367,8 @@
             <h2>Time's Up!</h2>
             <p>Your Score: <span id="finalScore">0</span></p>
             <button onclick="startGame()">Play Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #8D6E63; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -433,6 +454,32 @@
             return hole;
         }
 
+        // Sound Manager
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone: function (freq, type, duration, vol = 0.1) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            hit: function () { this.playTone(600, 'square', 0.1); },
+            miss: function () { this.playTone(150, 'sawtooth', 0.2); },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
+        };
+
         function peep() {
             let minTime, maxTime;
             let molesToSpawn = 1;
@@ -452,8 +499,24 @@
 
             const time = randomTime(minTime, maxTime);
 
+
+
             for (let i = 0; i < molesToSpawn; i++) {
                 const hole = randomHole(holes);
+
+                const mole = hole.querySelector('.mole');
+
+                // 1 in 200 Chance for Golden Mole
+                const isGolden = Math.random() < (1 / 200);
+
+                if (isGolden) {
+                    mole.classList.add('golden');
+                    hole.dataset.isGolden = 'true';
+                } else {
+                    mole.classList.remove('golden');
+                    hole.dataset.isGolden = 'false';
+                }
+
                 hole.classList.add('up');
                 setTimeout(() => {
                     hole.classList.remove('up');
@@ -468,6 +531,7 @@
             scoreDisplay.textContent = 0;
             timeDisplay.textContent = 30;
             score = 0;
+            timeLeft = 30;
             timeLeft = 30;
             timeUp = false;
 
@@ -489,6 +553,10 @@
             clearInterval(timerInterval);
             finalScoreDisplay.textContent = score;
             gameOverModal.style.display = 'flex';
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
             setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
         }
 
@@ -515,8 +583,24 @@
                 setTimeout(() => hole.classList.remove('whacked'), 200);
                 scoreDisplay.textContent = score;
 
-                showFloatText(hole, '+2s', '#4CAF50'); // Green
-                playTone(600, 'square', 0.1);
+                // Golden Mole Check
+                if (hole.dataset.isGolden === 'true') {
+                    if (typeof GoldManager !== 'undefined') {
+                        GoldManager.addCoins(1);
+                    }
+                    showFloatText(hole, '+1 Coin!', '#FFD700');
+                    SoundManager.coin();
+                    hole.dataset.isGolden = 'false'; // Consume
+                } else {
+                    showFloatText(hole, '+2s', '#4CAF50'); // Green
+                    SoundManager.hit();
+                }
+
+                hole.classList.remove('up');
+                hole.classList.add('whacked');
+                setTimeout(() => hole.classList.remove('whacked'), 200);
+                scoreDisplay.textContent = score;
+
             } else {
                 // Wrong Hit
                 timeLeft -= 1; // Penalty time
@@ -527,23 +611,12 @@
                 setTimeout(() => hole.classList.remove('whacked-wrong'), 200);
 
                 showFloatText(hole, '-1s', '#FF5252'); // Red
-                playTone(150, 'sawtooth', 0.2);
+                SoundManager.miss();
             }
         }
 
-        function playTone(freq, type, duration) {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, ctx.currentTime);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + duration);
-        }
+        // Deprecated playTone replaced by SoundManager
+        function playTone(freq, type, duration) { }
 
         // Input Handling
         document.addEventListener('keydown', (e) => {
@@ -661,10 +734,29 @@
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
             } else {
-                document.exitFullscreen();
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
             }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            try {
+                if (typeof TimeManager !== 'undefined') {
+                    // Prevent hanging by racing against a timeout
+                    const syncPromise = TimeManager.syncTimeRemote(true);
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([syncPromise, timeoutPromise]);
+                }
+            } catch (error) {
+                console.warn("Sync failed or timed out:", error);
+            }
+            window.location.href = 'index.html';
         }
 
     </script>

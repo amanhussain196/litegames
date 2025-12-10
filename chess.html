@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -327,7 +328,7 @@
         </div>
     </div>
 
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <!-- Difficulty Modal -->
     <div class="modal-overlay" id="difficultyModal">
@@ -627,6 +628,19 @@
                 if (isInCheck(board, turn)) {
                     statusElement.textContent = `Checkmate! ${turn === 'white' ? 'Black' : 'White'} wins!`;
                     gameActive = false;
+
+                    // Player (White) wins if it is Black's turn (Black is in checkmate)
+                    if (turn === 'black') {
+                        statusElement.textContent += " (+1 Gold Coin!)";
+                        if (typeof GoldManager !== 'undefined') {
+                            GoldManager.addCoins(1);
+                        }
+                    }
+
+                    // Sync Data
+                    if (typeof TimeManager !== 'undefined') {
+                        TimeManager.syncTimeRemote(true);
+                    }
                 } else {
                     statusElement.textContent = "Stalemate! It's a draw.";
                     gameActive = false;
@@ -979,6 +993,11 @@
                 }
             }
 
+            if (key === '0' || key.toLowerCase() === 'f') {
+                toggleFullScreen();
+                handled = true;
+            }
+
             if (handled) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1035,23 +1054,17 @@
             const ALT_DOWN = 20;
             const ALT_ENTER = 23;
 
-            const press = (action) => {
-                clearInterval(cursorHoldInterval);
-                action();
-                cursorHoldInterval = setInterval(action, 100);
-            };
-
             if (['2', 'ArrowUp'].includes(key) || [TV_UP, ALT_UP].includes(keyCode))
-                press(() => moveCursor(Math.max(0, cursor[0] - 1), cursor[1]));
+                moveCursor(Math.max(0, cursor[0] - 1), cursor[1]);
 
             else if (['8', 'ArrowDown'].includes(key) || [TV_DOWN, ALT_DOWN].includes(keyCode))
-                press(() => moveCursor(Math.min(7, cursor[0] + 1), cursor[1]));
+                moveCursor(Math.min(7, cursor[0] + 1), cursor[1]);
 
             else if (['4', 'ArrowLeft'].includes(key) || [TV_LEFT, ALT_LEFT].includes(keyCode))
-                press(() => moveCursor(cursor[0], Math.max(0, cursor[1] - 1)));
+                moveCursor(cursor[0], Math.max(0, cursor[1] - 1));
 
             else if (['6', 'ArrowRight'].includes(key) || [TV_RIGHT, ALT_RIGHT].includes(keyCode))
-                press(() => moveCursor(cursor[0], Math.min(7, cursor[1] + 1)));
+                moveCursor(cursor[0], Math.min(7, cursor[1] + 1));
 
             else if (['5', 'Enter', ' '].includes(key) || [TV_ENTER, ALT_ENTER].includes(keyCode))
                 handleSquareClick(cursor[0], cursor[1]);
@@ -1089,6 +1102,34 @@
         });
 
         document.addEventListener("keyup", () => clearInterval(cursorHoldInterval));
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            try {
+                if (typeof TimeManager !== 'undefined') {
+                    // Prevent hanging by racing against a timeout
+                    const syncPromise = TimeManager.syncTimeRemote(true);
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([syncPromise, timeoutPromise]);
+                }
+            } catch (error) {
+                console.warn("Sync failed or timed out:", error);
+            }
+            window.location.href = 'index.html';
+        }
+
     </script>
     <script src="global.js"></script>
 </body>

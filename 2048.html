@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #faf8ef;
@@ -298,6 +299,8 @@
         <div class="modal-overlay" id="gameOverModal">
             <h2>Game Over!</h2>
             <button onclick="resetGame()">Try Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #8f7a66; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -311,7 +314,8 @@
     </div>
 
     <div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div>
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <script>
         const gridElement = document.getElementById('grid');
@@ -331,6 +335,9 @@
         let grid = [];
         let score = 0;
         let gameActive = true;
+        let hasReached512 = false;
+        let hasReached1024 = false;
+        let hasReached2048 = false;
 
         // Sound Manager
         const SoundManager = {
@@ -357,7 +364,8 @@
             merge: function () {
                 this.playTone(400, 'sine', 0.1, 0.1);
                 setTimeout(() => this.playTone(600, 'sine', 0.1, 0.1), 50);
-            }
+            },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
         };
 
         function initGame() {
@@ -366,6 +374,9 @@
             scoreElement.textContent = '0';
             gameActive = true;
             gameOverModal.style.display = 'none';
+            hasReached512 = false;
+            hasReached1024 = false;
+            hasReached2048 = false;
 
             // Add two random tiles
             addRandomTile();
@@ -429,6 +440,20 @@
                     if (row[i] === row[i + 1]) {
                         row[i] *= 2;
                         score += row[i];
+
+                        // Check for Coin Rewards
+                        const val = row[i];
+                        if (val === 512 && !hasReached512) {
+                            hasReached512 = true;
+                            awardCoin();
+                        } else if (val === 1024 && !hasReached1024) {
+                            hasReached1024 = true;
+                            awardCoin();
+                        } else if (val === 2048 && !hasReached2048) {
+                            hasReached2048 = true;
+                            awardCoin();
+                        }
+
                         row.splice(i + 1, 1);
                         merged = true;
                     }
@@ -455,9 +480,36 @@
                 if (checkGameOver()) {
                     gameActive = false;
                     gameOverModal.style.display = 'flex';
+                    // Sync Data on Game Over
+                    if (typeof TimeManager !== 'undefined') {
+                        TimeManager.syncTimeRemote(true);
+                    }
                     setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
                 }
             }
+        }
+
+        function awardCoin() {
+            if (typeof GoldManager !== 'undefined') {
+                GoldManager.addCoins(1);
+            }
+            SoundManager.coin();
+            // Show feedback
+            const container = document.querySelector('.header-container');
+            const feedback = document.createElement('div');
+            feedback.innerHTML = "+1 Gold Coin!";
+            feedback.style.position = 'absolute';
+            feedback.style.top = '10px';
+            feedback.style.left = '50%';
+            feedback.style.transform = 'translateX(-50%)';
+            feedback.style.color = '#FFD700';
+            feedback.style.fontWeight = 'bold';
+            feedback.style.fontSize = '2rem';
+            feedback.style.textShadow = '1px 1px 2px black';
+            feedback.style.zIndex = 1000;
+            feedback.style.animation = 'popIn 0.5s ease-out';
+            document.body.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 2000);
         }
 
         function checkGameOver() {
@@ -564,8 +616,8 @@
                 window.location.href = 'index.html';
                 handled = true;
             }
-            else if (key === '0') {
-                window.location.href = 'index.html';
+            else if (key === '0' || key.toLowerCase() === 'f') {
+                toggleFullScreen();
                 handled = true;
             }
 
@@ -574,6 +626,26 @@
                 e.stopPropagation();
             }
         }, { passive: false });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
 
         // Check mode
         window.addEventListener('DOMContentLoaded', () => {

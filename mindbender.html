@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1280, initial-scale=1">
     <title>Mind Bender | Man Games</title>
@@ -375,6 +376,10 @@
         Numpad: 2 (Up) • 8 (Down) • 4 (Left) • 6 (Right) • 5 (Select) • 0 (Fullscreen)
     </div>
 
+    <a href="#" class="btn"
+        style="position: fixed; top: 10px; left: 10px; padding: 10px 20px; font-size: 1rem; z-index: 1000;"
+        onclick="goHome(event)">🏠 Home</a>
+
     <script>
         // Game Configuration
         const LEVELS = [
@@ -416,6 +421,7 @@
         let consecutiveMatches = 0;
         let highScore = 0;
         let highScorerName = '---';
+        let failedPairsSinceLastCoin = 0; // Pity system tracker
 
         // Audio Context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -672,6 +678,21 @@
                     updateGrid();
                     updateUI();
                 }
+
+                // Coin Drop Logic
+                // 2% chance OR Pity (20 misses)
+                if (Math.random() < 0.02 || failedPairsSinceLastCoin >= 20) {
+                    if (typeof GoldManager !== 'undefined') {
+                        GoldManager.addCoins(1);
+                        showFeedback('+1 COIN!', 'good');
+                        // Play coin sound if possible, or re-use match sound
+                    }
+                    failedPairsSinceLastCoin = 0;
+                    console.log("Match Dropped Coin!");
+                } else {
+                    failedPairsSinceLastCoin++;
+                    console.log("Match No Coin. Pity:", failedPairsSinceLastCoin);
+                }
             } else {
                 // Mismatch
                 consecutiveMatches = 0;
@@ -731,6 +752,11 @@
                 retryBtn.style.display = 'none';
             }
 
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
+
             // Focus retry button
             setTimeout(() => {
                 const btn = gameOverScreen.querySelector('button');
@@ -747,6 +773,11 @@
             if (score > highScore) {
                 victoryHighScoreInput.style.display = 'flex';
                 playAgainBtn.style.display = 'none';
+            }
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
             }
 
             // Focus play again button
@@ -906,6 +937,26 @@
                 e.stopPropagation();
             }
         });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
 
     </script>
     <script src="global.js"></script>

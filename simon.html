@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -259,7 +260,7 @@
         </p>
     </div>
 
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <div class="modal-overlay" id="startModal">
         <div class="modal">
@@ -273,6 +274,8 @@
             <h2>Game Over</h2>
             <p>You reached Level <span id="finalLevel">0</span></p>
             <button onclick="startGame()">Try Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #e74c3c; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -302,6 +305,7 @@
         let sequence = [];
         let playerSequence = [];
         let level = 0;
+        let coinsCollectedInRun = 0;
         let gameActive = false;
         let isPlayerTurn = false;
 
@@ -331,7 +335,8 @@
             red: function () { this.playTone(400, 'sine', 0.3); },
             yellow: function () { this.playTone(500, 'sine', 0.3); },
             blue: function () { this.playTone(600, 'sine', 0.3); },
-            error: function () { this.playTone(150, 'sawtooth', 0.5); }
+            error: function () { this.playTone(150, 'sawtooth', 0.5); },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
         };
 
         function startGame() {
@@ -339,6 +344,7 @@
             gameOverModal.style.display = 'none';
             sequence = [];
             level = 0;
+            coinsCollectedInRun = 0;
             gameActive = true;
             gameBoard.focus();
             nextLevel();
@@ -392,8 +398,38 @@
             if (playerSequence.length === sequence.length) {
                 isPlayerTurn = false;
                 statusDisplay.textContent = "Good!";
+
+                // Coin Logic: Rounds 7, 12, 17
+                if ([7, 12, 17].includes(level) && coinsCollectedInRun < 3) {
+                    coinsCollectedInRun++;
+                    awardCoin();
+                }
+
                 setTimeout(nextLevel, 500);
             }
+        }
+
+        function awardCoin() {
+            if (typeof GoldManager !== 'undefined') {
+                GoldManager.addCoins(1);
+            }
+            SoundManager.coin();
+            // Show feedback
+            const container = document.querySelector('.center-circle'); // Or anywhere visible
+            const feedback = document.createElement('div');
+            feedback.innerHTML = "+1 Coin!";
+            feedback.style.position = 'absolute';
+            feedback.style.top = '-50px';
+            feedback.style.width = '200px';
+            feedback.style.textAlign = 'center';
+            feedback.style.color = '#FFD700';
+            feedback.style.fontWeight = 'bold';
+            feedback.style.fontSize = '2rem';
+            feedback.style.textShadow = '1px 1px 2px black';
+            feedback.style.zIndex = 1000;
+            feedback.style.animation = 'popIn 0.5s ease-out';
+            container.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 2000);
         }
 
         function gameOver() {
@@ -401,6 +437,10 @@
             SoundManager.error();
             finalLevelSpan.textContent = level;
             gameOverModal.style.display = 'flex';
+            // Sync Data on Game Over
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
             setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
         }
 
@@ -479,11 +519,36 @@
                 handled = true;
             }
 
+            if (key === '0' || key.toLowerCase() === 'f') {
+                toggleFullScreen();
+                handled = true;
+            }
+
             if (handled) {
                 e.preventDefault();
                 e.stopPropagation();
             }
         });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
 
         // Focus Start on load
         window.onload = () => {

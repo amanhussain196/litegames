@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -182,7 +183,8 @@
     <canvas id="gameCanvas" width="400" height="600" tabindex="0"></canvas>
 
     <div class="controls-hint">Press 5, Space, or Tap to Place Block</div>
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <div class="controls-hint">Press 5, Space, or Tap to Place Block</div>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <div class="modal-overlay" id="startModal">
         <div class="modal">
@@ -268,7 +270,8 @@
             gameOver: function () {
                 this.playTone(200, 'sawtooth', 0.4, 0.2);
                 setTimeout(() => this.playTone(150, 'sawtooth', 0.4, 0.2), 200);
-            }
+            },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
         };
 
         function startGame() {
@@ -318,6 +321,16 @@
             direction = Math.random() > 0.5 ? 1 : -1;
             if (direction === 1) currentBlock.x = -currentBlock.width;
             else currentBlock.x = canvas.width;
+
+            // Coin Logic
+            // Height is current blocks count + 1 (the one we are placing)
+            const height = blocks.length + 1;
+            // Changed from 3 to 5 stack gaps
+            if (height === 30 || (height > 30 && (height - 30) % 5 === 0)) {
+                currentBlock.hasCoin = true;
+            } else {
+                currentBlock.hasCoin = false;
+            }
         }
 
         function placeBlock() {
@@ -367,6 +380,17 @@
             speed += 0.1;
 
             spawnBlock();
+
+            // Collect Coin
+            if (currentBlock.hasCoin) {
+                // Assuming successful placement means collecting it
+                if (typeof GoldManager !== 'undefined') {
+                    GoldManager.addCoins(1);
+                    scoreDisplay.innerHTML = score + "<br><span style='color:#FFD700; font-size:2rem;'>+1 Coin!</span>";
+                    setTimeout(() => scoreDisplay.textContent = score, 1000);
+                    SoundManager.coin();
+                }
+            }
         }
 
         function update() {
@@ -419,6 +443,53 @@
                 ctx.fillRect(currentBlock.x, currentBlock.y, currentBlock.width, currentBlock.height);
                 ctx.fillStyle = 'rgba(255,255,255,0.1)';
                 ctx.fillRect(currentBlock.x, currentBlock.y, currentBlock.width, currentBlock.height / 2);
+
+                // Draw Coin if present
+                if (currentBlock.hasCoin) {
+                    const centerX = canvas.width / 2;
+                    const centerY = currentBlock.y + currentBlock.height / 2;
+
+                    // Floating effect
+                    const floatOffset = Math.sin(Date.now() / 200) * 5;
+
+                    ctx.fillStyle = '#FFD700'; // Gold
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY + floatOffset, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#B8860B';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', centerX, centerY + floatOffset);
+                }
+            }
+
+            // Draw Future Coins (Visual Indicator)
+            const currentHeight = blocks.length + (currentBlock ? 1 : 0);
+            const startHeight = currentHeight + 1;
+            const baseY = (blocks.length > 0) ? blocks[0].y : (canvas.height - 50);
+
+            // Look ahead 50 levels
+            for (let h = startHeight; h <= startHeight + 50; h++) {
+                if (h === 30 || (h > 30 && (h - 30) % 5 === 0)) {
+                    const blockY = baseY - (h - 1) * 30; // BLOCK_HEIGHT is 30
+                    const centerY = blockY + 15;
+                    const centerX = canvas.width / 2;
+
+                    const floatOffset = Math.sin(Date.now() / 200) * 5;
+
+                    ctx.globalAlpha = 0.5; // Slightly transparent for future coins
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY + floatOffset, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#B8860B';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', centerX, centerY + floatOffset);
+                    ctx.globalAlpha = 1.0;
+                }
             }
 
             ctx.restore();
@@ -443,6 +514,11 @@
                 const btn = gameOverModal.querySelector('button');
                 if (btn) btn.focus();
             }, 100);
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
         }
 
         // Input Handling
@@ -532,10 +608,22 @@
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
             } else {
-                document.exitFullscreen();
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
             }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
         }
 
     </script>

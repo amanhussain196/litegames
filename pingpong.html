@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #000;
@@ -175,186 +176,12 @@
     </style>
 </head>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1">
-    <title>Ping Pong | Man Games</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #000;
-            --accent: #00ff00;
-            --text-color: #fff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        h1 {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 0 0 10px var(--accent);
-        }
-
-        .game-container {
-            position: relative;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-            border: 2px solid #333;
-            outline: none;
-            /* Remove focus outline */
-        }
-
-        canvas {
-            background: #000;
-            display: block;
-        }
-
-        .score-board {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 100px;
-            font-family: 'Fredoka', sans-serif;
-            font-size: 3rem;
-            color: rgba(255, 255, 255, 0.5);
-            pointer-events: none;
-        }
-
-        .controls-hint {
-            margin-top: 20px;
-            color: #666;
-            text-align: center;
-        }
-
-        .key-badge {
-            display: inline-block;
-            background: #222;
-            color: var(--accent);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            border: 1px solid #444;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #666;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.2s;
-            padding: 10px 20px;
-            border-radius: 20px;
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        .back-btn:hover,
-        .back-btn:focus {
-            color: var(--text-color);
-            background: rgba(0, 0, 0, 0.4);
-            outline: 2px solid var(--accent);
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal {
-            background: #111;
-            padding: 3rem;
-            border-radius: 20px;
-            text-align: center;
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-            max-width: 90%;
-            width: 400px;
-        }
-
-        button {
-            padding: 1rem 3rem;
-            border-radius: 5px;
-            border: none;
-            font-family: 'Fredoka', sans-serif;
-            font-size: 1.5rem;
-            cursor: pointer;
-            background: var(--accent);
-            color: black;
-            font-weight: bold;
-            margin-top: 20px;
-            text-transform: uppercase;
-        }
-
-        button:hover,
-        button:focus {
-            background: #fff;
-            box-shadow: 0 0 15px #fff;
-            outline: 3px solid #333;
-        }
-
-        .difficulty-btn {
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            margin: 0 5px;
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-        }
-
-        .difficulty-btn.selected {
-            background: var(--accent);
-            color: #000;
-            box-shadow: 0 0 10px var(--accent);
-        }
-
-        /* TV Mode */
-        body.mode-tv {
-            cursor: none;
-        }
-    </style>
+</style>
 </head>
 
 <body>
 
-    <a href="index.html" class="back-btn">← Back</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <h1>Ping Pong</h1>
 
@@ -390,6 +217,8 @@
         <div class="modal">
             <h2 id="winnerText">Game Over</h2>
             <button onclick="startGame()">Replay</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #e74c3c; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -450,6 +279,42 @@
         let currentDifficulty = 'medium'; // Default to medium
 
         const difficulties = ['easy', 'medium', 'hard'];
+
+        // Sound Manager
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone: function (freq, type, duration, vol = 0.1) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            hit: function () { this.playTone(400, 'square', 0.05, 0.1); },
+            wall: function () { this.playTone(200, 'sine', 0.05, 0.1); },
+            score: function () { this.playTone(600, 'triangle', 0.2, 0.2); },
+            win: function () {
+                this.playTone(400, 'sine', 0.1, 0.2);
+                setTimeout(() => this.playTone(600, 'sine', 0.1, 0.2), 100);
+                setTimeout(() => this.playTone(800, 'sine', 0.2, 0.2), 200);
+            },
+            lose: function () {
+                this.playTone(300, 'sawtooth', 0.2, 0.2);
+                setTimeout(() => this.playTone(200, 'sawtooth', 0.2, 0.2), 200);
+            },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
+        };
 
         function selectDifficulty(diff) {
             currentDifficulty = diff;
@@ -533,6 +398,7 @@
             // Wall collision (Top/Bottom)
             if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
                 ball.velocityY = -ball.velocityY;
+                SoundManager.wall();
             }
 
             // Paddle Collision
@@ -554,6 +420,8 @@
 
                 // Speed up
                 ball.speed += 0.5;
+
+                SoundManager.hit();
             }
 
             // Score
@@ -640,9 +508,31 @@
         function endGame() {
             isGameRunning = false;
             cancelAnimationFrame(gameLoopId);
-            winnerText.textContent = user.score >= 5 ? "YOU WIN!" : "CPU WINS!";
-            winnerText.style.color = user.score >= 5 ? "#00ff00" : "#ff0000";
+            const playerWins = user.score >= 5;
+            winnerText.textContent = playerWins ? "YOU WIN!" : "CPU WINS!";
+            winnerText.style.color = playerWins ? "#00ff00" : "#ff0000";
+
+            if (playerWins) {
+                SoundManager.win();
+                // 50% chance for coin
+                if (Math.random() < 0.5) {
+                    if (typeof GoldManager !== 'undefined') {
+                        GoldManager.addCoins(1);
+                        winnerText.innerHTML += "<br><span style='color:#FFD700; font-size:2rem;'>(+1 Coin!)</span>";
+                        SoundManager.coin();
+                    }
+                }
+            } else {
+                SoundManager.lose();
+            }
+
             gameOverModal.style.display = 'flex';
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
+
             setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
         }
 
@@ -712,8 +602,8 @@
                     downPressed = true;
                     handled = true;
                 }
-                if (key === '0') {
-                    window.location.href = 'index.html';
+                if (key === '0' || key.toLowerCase() === 'f') {
+                    toggleFullScreen();
                     handled = true;
                 }
             }
@@ -773,6 +663,33 @@
             const startBtn = document.getElementById('startBtn');
             if (startBtn) startBtn.focus();
         });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            try {
+                if (typeof TimeManager !== 'undefined') {
+                    // Prevent hanging by racing against a timeout
+                    const syncPromise = TimeManager.syncTimeRemote(true);
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([syncPromise, timeoutPromise]);
+                }
+            } catch (error) {
+                console.warn("Sync failed or timed out:", error);
+            }
+            window.location.href = 'index.html';
+        }
 
     </script>
     <script src="global.js"></script>

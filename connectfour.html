@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -262,7 +263,7 @@
 
 <body>
 
-    <a href="index.html" class="back-btn">← Back</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <h1>Connect Four</h1>
 
@@ -300,6 +301,8 @@
         <div class="modal">
             <h2 id="winnerText">Player 1 Wins!</h2>
             <button onclick="startGame()">Play Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #2980b9; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -320,7 +323,39 @@
         let currentDifficulty = 'easy';
         let isCpuThinking = false;
 
+
+
         const difficulties = ['easy', 'medium', 'hard'];
+
+        // Sound Manager
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone: function (freq, type, duration, vol = 0.1) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            drop: function () { this.playTone(300, 'sine', 0.1); },
+            win: function () {
+                this.playTone(400, 'sine', 0.1, 0.2);
+                setTimeout(() => this.playTone(600, 'sine', 0.1, 0.2), 100);
+            },
+            draw: function () { this.playTone(200, 'triangle', 0.3); },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
+        };
 
         function selectDifficulty(diff) {
             currentDifficulty = diff;
@@ -418,6 +453,8 @@
             piece.classList.add(currentPlayer === 1 ? 'red' : 'yellow');
             slot.appendChild(piece);
 
+            SoundManager.drop();
+
             if (checkWin(colIndex, rowIndex)) {
                 endGame(currentPlayer);
             } else if (checkDraw()) {
@@ -432,37 +469,152 @@
             }
         }
 
+
+
         function cpuMove() {
             if (!gameActive) return;
 
-            let col = -1;
+            // Small delay for realism
+            setTimeout(() => {
+                let col = -1;
 
-            if (currentDifficulty === 'easy') {
-                col = getRandomMove();
-            } else if (currentDifficulty === 'medium') {
-                // Try to win or block, else random
-                col = findBestMove(2); // Win
-                if (col === -1) col = findBestMove(1); // Block
-                if (col === -1) col = getRandomMove();
-            } else { // Hard
-                // Minimax-ish (simplified for responsiveness)
-                // 1. Win
-                col = findBestMove(2);
-                // 2. Block
-                if (col === -1) col = findBestMove(1);
-                // 3. Strategic Center
-                if (col === -1 && isValidMove(3)) col = 3;
-                // 4. Random valid
-                if (col === -1) col = getRandomMove();
+                if (currentDifficulty === 'easy') {
+                    // Random move
+                    col = getRandomMove();
+                } else if (currentDifficulty === 'medium') {
+                    // 1. Win
+                    col = findBestMove(2);
+                    // 2. Block
+                    if (col === -1) col = findBestMove(1);
+                    // 3. Random
+                    if (col === -1) col = getRandomMove();
+                } else { // Hard - Minimax
+                    col = getBestMoveMinimax();
+                }
+
+                // Fallback
+                if (col === -1 || !isValidMove(col)) col = getRandomMove();
+
+                isCpuThinking = false;
+                dropPiece(col);
+            }, 500);
+        }
+
+        // --- Minimax Implementation for Hard Mode ---
+        function getBestMoveMinimax() {
+            // Limited depth for performance
+            return minimax(board, 5, -Infinity, Infinity, true).column;
+        }
+
+        // Returns {column, score}
+        function minimax(currBoard, depth, alpha, beta, maximizingPlayer) {
+            const validMoves = getValidMoves(currBoard);
+            const terminal = isTerminalNode(currBoard);
+
+            if (depth === 0 || terminal) {
+                if (terminal) {
+                    if (checkWinPlayer(currBoard, 2)) return { column: null, score: 1000000 };
+                    else if (checkWinPlayer(currBoard, 1)) return { column: null, score: -1000000 };
+                    else return { column: null, score: 0 }; // Draw
+                } else {
+                    return { column: null, score: scorePosition(currBoard, 2) };
+                }
             }
 
-            // Fallback if column full (shouldn't happen with getRandomMove logic)
-            if (col === -1 || !isValidMove(col)) {
-                col = getRandomMove();
-            }
+            if (maximizingPlayer) {
+                let value = -Infinity;
+                let column = validMoves[Math.floor(Math.random() * validMoves.length)];
 
-            isCpuThinking = false;
-            dropPiece(col);
+                for (let col of validMoves) {
+                    const tempBoard = simulateMove(currBoard, col, 2);
+                    const newScore = minimax(tempBoard, depth - 1, alpha, beta, false).score;
+                    if (newScore > value) {
+                        value = newScore;
+                        column = col;
+                    }
+                    alpha = Math.max(alpha, value);
+                    if (alpha >= beta) break;
+                }
+                return { column: column, score: value };
+            } else {
+                let value = Infinity;
+                let column = validMoves[Math.floor(Math.random() * validMoves.length)];
+                for (let col of validMoves) {
+                    const tempBoard = simulateMove(currBoard, col, 1);
+                    const newScore = minimax(tempBoard, depth - 1, alpha, beta, true).score;
+                    if (newScore < value) {
+                        value = newScore;
+                        column = col;
+                    }
+                    beta = Math.min(beta, value);
+                    if (alpha >= beta) break;
+                }
+                return { column: column, score: value };
+            }
+        }
+
+        function getValidMoves(b) {
+            let moves = [];
+            for (let c = 0; c < COLS; c++) {
+                if (b[c][0] === 0) moves.push(c);
+            }
+            return moves;
+        }
+
+        function isTerminalNode(b) {
+            return checkWinPlayer(b, 1) || checkWinPlayer(b, 2) || getValidMoves(b).length === 0;
+        }
+
+        function simulateMove(b, col, player) {
+            // Deep copy
+            const newBoard = b.map(arr => [...arr]);
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (newBoard[col][r] === 0) {
+                    newBoard[col][r] = player;
+                    break;
+                }
+            }
+            return newBoard;
+        }
+
+        function checkWinPlayer(b, player) {
+            // Helper to check win on a specific board state
+            // Directions: Horizontal, Vertical, Diagonal /, Diagonal \
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    if (b[c][r] === player) {
+                        if (checkDirectionBoard(b, c, r, 1, 0, player) ||
+                            checkDirectionBoard(b, c, r, 0, 1, player) ||
+                            checkDirectionBoard(b, c, r, 1, 1, player) ||
+                            checkDirectionBoard(b, c, r, 1, -1, player)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function checkDirectionBoard(b, c, r, dc, dr, player) {
+            let count = 0;
+            for (let i = 0; i < 4; i++) {
+                const nc = c + dc * i;
+                const nr = r + dr * i;
+                if (nc >= 0 && nc < COLS && nr >= 0 && nr < ROWS && b[nc][nr] === player) count++;
+                else break;
+            }
+            return count === 4;
+        }
+
+        function scorePosition(b, piece) {
+            let score = 0;
+            // Center column evaluation
+            let centerArray = b[3];
+            let centerCount = centerArray.filter(x => x === piece).length;
+            score += centerCount * 3;
+
+            // Horizontal, Vertical, Diagonal
+            // ... Simplified heuristics can be added here
+            // For now, rely on Win/Loss lookahead primarily
+            return score;
         }
 
         function isValidMove(c) {
@@ -544,10 +696,33 @@
             if (winner === 0) {
                 winnerText.textContent = "It's a Draw!";
                 winnerText.style.color = "#fff";
+                SoundManager.draw();
             } else {
                 winnerText.textContent = winner === 1 ? "You Win!" : "CPU Wins!";
                 winnerText.style.color = winner === 1 ? "var(--p1-color)" : "var(--p2-color)";
+                if (winner === 1) {
+                    SoundManager.win();
+                    // Coin Logic
+                    let chance = 0;
+                    if (currentDifficulty === 'easy') chance = 0.10; // 10%
+                    if (currentDifficulty === 'medium') chance = 0.35; // 35%
+                    if (currentDifficulty === 'hard') chance = 0.50; // 50%
+
+                    if (Math.random() < chance) {
+                        if (typeof GoldManager !== 'undefined') {
+                            GoldManager.addCoins(1);
+                        }
+                        winnerText.innerHTML += "<br><span style='color:#FFD700; font-size:2rem;'>(+1 Coin!)</span>";
+                        SoundManager.coin();
+                    }
+                }
             }
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
+
             setTimeout(() => {
                 gameOverModal.style.display = 'flex';
                 gameOverModal.querySelector('button').focus();
@@ -622,8 +797,8 @@
                 } else if (key === 'Enter' || key === ' ' || key === '5' || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
                     handleColumnClick(selectedCol);
                     handled = true;
-                } else if (key === '0') {
-                    window.location.href = 'index.html';
+                } else if (key === '0' || key.toLowerCase() === 'f') {
+                    toggleFullScreen();
                     handled = true;
                 }
             }
@@ -658,6 +833,33 @@
         // Init
         createBoard();
         setTimeout(() => startModal.querySelector('button').focus(), 100);
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            try {
+                if (typeof TimeManager !== 'undefined') {
+                    // Prevent hanging by racing against a timeout
+                    const syncPromise = TimeManager.syncTimeRemote(true);
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([syncPromise, timeoutPromise]);
+                }
+            } catch (error) {
+                console.warn("Sync failed or timed out:", error);
+            }
+            window.location.href = 'index.html';
+        }
     </script>
     <script src="global.js"></script>
 </body>

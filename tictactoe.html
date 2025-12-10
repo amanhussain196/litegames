@@ -10,6 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #1a1a2e;
@@ -229,7 +230,7 @@
         </div>
     </div>
 
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <div class="modal-overlay" id="endModal">
         <div class="modal">
@@ -265,6 +266,7 @@
         let currentPlayer = 'X';
         let gameActive = true;
         let cursor = 4; // Center (0-8)
+        let gamesSinceLastCoin = 0; // Pity system
 
         // Sound Manager
         const SoundManager = {
@@ -361,39 +363,68 @@
         }
 
         function aiMove() {
-            // Simple AI: Try to win, then block, then random
-            let move = getBestMove();
-            handleCellClick(move);
-        }
-
-        function getBestMove() {
-            // 1. Try to win
+            if (!gameActive) return;
+            // Minimax AI for strong opponent
+            let bestScore = -Infinity;
+            let move;
             for (let i = 0; i < 9; i++) {
                 if (board[i] === '') {
                     board[i] = 'O';
-                    if (checkWinCondition('O')) {
-                        board[i] = '';
-                        return i;
-                    }
+                    let score = minimax(board, 0, false);
                     board[i] = '';
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
                 }
             }
-            // 2. Block X
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === '') {
-                    board[i] = 'X';
-                    if (checkWinCondition('X')) {
-                        board[i] = '';
-                        return i;
-                    }
-                    board[i] = '';
-                }
+            if (move !== undefined) {
+                handleCellClick(move);
             }
-            // 3. Center
-            if (board[4] === '') return 4;
-            // 4. Random
-            const emptyIndices = board.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
-            return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        }
+
+        let scores = {
+            X: -10,
+            O: 10,
+            tie: 0
+        };
+
+        function minimax(board, depth, isMaximizing) {
+            let result = checkWinner();
+            if (result !== null) {
+                return scores[result];
+            }
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'O';
+                        let score = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'X';
+                        let score = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function checkWinner() {
+            if (checkWinCondition('O')) return 'O';
+            if (checkWinCondition('X')) return 'X';
+            if (!board.includes('')) return 'tie';
+            return null;
         }
 
         function checkWinCondition(player) {
@@ -415,12 +446,34 @@
             gameActive = false;
             if (draw) {
                 winnerText.textContent = "It's a Draw!";
+                winnerText.style.color = '#fff';
                 SoundManager.draw();
             } else {
                 winnerText.textContent = `Player ${currentPlayer} Wins!`;
+                if (currentPlayer === 'X') {
+                    winnerText.style.color = 'var(--x-color)';
+                    // Coin Logic: 10% or Pity 10
+                    if (Math.random() < 0.10 || gamesSinceLastCoin >= 10) {
+                        if (typeof GoldManager !== 'undefined') {
+                            GoldManager.addCoins(1);
+                            winnerText.innerHTML += "<br><span style='color:#FFD700; font-size:1.5rem;'>(+1 Gold Coin!)</span>";
+                        }
+                        gamesSinceLastCoin = 0;
+                    } else {
+                        gamesSinceLastCoin++;
+                        console.log("No Coin. Pity:", gamesSinceLastCoin);
+                    }
+                } else {
+                    winnerText.style.color = 'var(--o-color)';
+                }
                 SoundManager.win();
             }
             modalElement.style.display = 'flex';
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
 
             // Focus Play Again button
             setTimeout(() => {
@@ -536,6 +589,40 @@
                 setTimeout(() => gameContainer.focus(), 50);
             }
         });
+
+        // Toggle Full Screen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '0' || e.key.toLowerCase() === 'f') {
+                toggleFullScreen();
+            }
+        });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            try {
+                if (typeof TimeManager !== 'undefined') {
+                    // Prevent hanging by racing against a timeout
+                    const syncPromise = TimeManager.syncTimeRemote(true);
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([syncPromise, timeoutPromise]);
+                }
+            } catch (error) {
+                console.warn("Sync failed or timed out:", error);
+            }
+            window.location.href = 'index.html';
+        }
 
     </script>
     <script src="global.js"></script>

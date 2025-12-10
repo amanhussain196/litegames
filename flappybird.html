@@ -183,7 +183,8 @@
     <canvas id="gameCanvas" width="400" height="600" tabindex="0"></canvas>
 
     <div class="controls-hint">Press 2, 5, Space, or Tap to Jump</div>
-    <a href="index.html" class="back-btn">← Back to Menu</a>
+    <div class="controls-hint">Press 2, 5, Space, or Tap to Jump</div>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
 
     <div class="modal-overlay" id="startModal">
         <div class="modal">
@@ -197,6 +198,8 @@
             <h2>Game Over</h2>
             <p>Score: <span id="finalScore">0</span></p>
             <button onclick="resetGame()">Play Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #e74c3c; display: block; width: 100%;">Back to Home</button>
         </div>
     </div>
 
@@ -218,7 +221,10 @@
         // Game State
         let bird = { x: 50, y: 300, width: 30, height: 30, velocity: 0 };
         let pipes = [];
+        let coins = [];
         let score = 0;
+        let coinsCollectedInRun = 0;
+        let pillarCount = 0;
         let frameCount = 0;
         let gameState = 'start'; // start, playing, gameover
         let animationId;
@@ -249,7 +255,8 @@
             crash: function () {
                 this.playTone(100, 'sawtooth', 0.3, 0.2);
                 setTimeout(() => this.playTone(80, 'sawtooth', 0.3, 0.2), 100);
-            }
+            },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
         };
 
         function startGame() {
@@ -268,7 +275,10 @@
         function resetVars() {
             bird = { x: 50, y: 300, width: 30, height: 30, velocity: 0 };
             pipes = [];
+            coins = [];
             score = 0;
+            coinsCollectedInRun = 0;
+            pillarCount = 0;
             frameCount = 0;
             scoreDisplay.textContent = '0';
         }
@@ -289,6 +299,13 @@
                 const minHeight = 50;
                 const maxHeight = canvas.height - PIPE_GAP - minHeight;
                 const height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+                pillarCount++;
+
+                let hasCoin = false;
+                // Spawn coin every 10 pillars, max 3 per run
+                if (pillarCount % 10 === 0 && coinsCollectedInRun < 3) {
+                    hasCoin = true;
+                }
 
                 pipes.push({
                     x: canvas.width,
@@ -297,7 +314,21 @@
                     height: height,
                     passed: false
                 });
-                // Bottom pipe is inferred
+
+                if (hasCoin) {
+                    // Randomize coin position within gap (harder to catch)
+                    const minCoinY = height + 5;
+                    const maxCoinY = height + PIPE_GAP - 35; // 30 height + 5 margin
+                    const coinY = Math.floor(Math.random() * (maxCoinY - minCoinY + 1) + minCoinY);
+
+                    coins.push({
+                        x: canvas.width + 10, // centered horizontally (pipe width 50 - coin width 30) / 2 = 10
+                        y: coinY,
+                        width: 30,
+                        height: 30,
+                        collected: false
+                    });
+                }
             }
 
             // Pipe Movement & Collision
@@ -332,10 +363,29 @@
                 }
             }
 
-            // Remove off-screen pipes
-            if (pipes.length > 0 && pipes[0].x < -50) {
-                pipes.shift();
+            // Coin Movement & Collision
+            for (let i = 0; i < coins.length; i++) {
+                let c = coins[i];
+                c.x -= PIPE_SPEED;
+
+                if (!c.collected &&
+                    bird.x < c.x + c.width &&
+                    bird.x + bird.width > c.x &&
+                    bird.y < c.y + c.height &&
+                    bird.y + bird.height > c.y) {
+
+                    c.collected = true;
+                    coinsCollectedInRun++;
+                    SoundManager.coin();
+                    if (typeof GoldManager !== 'undefined') {
+                        GoldManager.addCoins(1);
+                    }
+                }
             }
+
+            // Remove off-screen pipes & coins
+            if (pipes.length > 0 && pipes[0].x < -50) pipes.shift();
+            if (coins.length > 0 && coins[0].x < -50) coins.shift();
 
             // Ground/Ceiling Collision
             if (bird.y + bird.height > canvas.height || bird.y < 0) {
@@ -365,6 +415,21 @@
                 const bottomHeight = canvas.height - bottomY;
                 ctx.fillRect(p.x, bottomY, p.width, bottomHeight);
                 ctx.strokeRect(p.x, bottomY, p.width, bottomHeight);
+            });
+
+            // Draw Coins
+            coins.forEach(c => {
+                if (!c.collected) {
+                    ctx.fillStyle = '#FFD700'; // Gold
+                    ctx.beginPath();
+                    ctx.arc(c.x + 15, c.y + 15, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#B8860B';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', c.x + 15, c.y + 15);
+                }
             });
 
             // Draw Bird
@@ -405,8 +470,14 @@
 
             // Focus Play Again
             setTimeout(() => {
-                gameOverModal.querySelector('button').focus();
+                const btn = gameOverModal.querySelector('button');
+                if (btn) btn.focus();
             }, 100);
+
+            // Sync Data
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
         }
 
         // Input Handling
@@ -449,11 +520,36 @@
                 }
             }
 
+            if (key === '0' || key.toLowerCase() === 'f') {
+                toggleFullScreen();
+                handled = true;
+            }
+
             if (handled) {
                 e.preventDefault();
                 e.stopPropagation();
             }
         });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
 
         // Touch/Click Handling
         canvas.addEventListener('mousedown', (e) => {
