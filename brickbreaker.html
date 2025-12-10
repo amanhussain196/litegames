@@ -128,6 +128,28 @@
             transform: translateY(4px);
         }
 
+        /* Coin Style */
+        .coin-indicator {
+            position: absolute;
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
         .btn-pause {
             background: #f1c40f;
             color: white;
@@ -351,6 +373,8 @@
 <body>
 
     <div id="gameWrapper">
+        <a href="#" class="btn-home" onclick="goHome(event)"
+            style="position: absolute; top: 10px; left: 10px; z-index: 20;">🏠 HOME</a>
         <div class="ui-panel">
             <div class="score-box">LEVEL <span id="level">1</span></div>
             <div class="score-box">🧱 <span id="score">0</span></div>
@@ -464,6 +488,11 @@
             playMetal() {
                 this.playTone(800, 'square', 0.05, 0.1);
                 setTimeout(() => this.playTone(1200, 'square', 0.05, 0.05), 20);
+            },
+
+            playCoin() {
+                this.playTone(1000, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(1500, 'sine', 0.2, 0.1), 100);
             }
         };
 
@@ -494,6 +523,7 @@
         let isPaused = true;
         let gameLoop;
         let breakableBricksCount = 0;
+        let levelsSinceLastGold = 0;
 
         // Load High Score
         loadHighScore();
@@ -673,13 +703,40 @@
                         hp: hp,
                         maxHp: maxHp,
                         isMetal: isMetal,
-                        isLucky: isLucky
+                        maxHp: maxHp,
+                        isMetal: isMetal,
+                        isLucky: isLucky,
+                        isGold: false // Default
                     };
+                }
+            }
+            // Assign Golden Brick
+            const breakableBricks = [];
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    if (bricks[c][r].status === 1 && !bricks[c][r].isMetal) {
+                        breakableBricks.push(bricks[c][r]);
+                    }
+                }
+            }
+
+            // 30% chance OR Pity (2 misses)
+            if (breakableBricks.length > 0) {
+                if (Math.random() < 0.30 || levelsSinceLastGold >= 2) {
+                    const randIndex = Math.floor(Math.random() * breakableBricks.length);
+                    breakableBricks[randIndex].isGold = true;
+                    // Reset Pity
+                    levelsSinceLastGold = 0;
+                    console.log("Golden Brick Spawned!");
+                } else {
+                    levelsSinceLastGold++;
+                    console.log("No Gold Brick. Pity:", levelsSinceLastGold);
                 }
             }
         }
 
         function getBrickColor(brick) {
+            if (brick.isGold) return '#FFD700'; // GOLD
             if (brick.isMetal) return '#7f8c8d'; // Gray for metal
 
             // HSL: Hue 0-360. Let's use a nice blue/teal range.
@@ -708,8 +765,10 @@
             if (SoundManager.ctx.state === 'suspended') SoundManager.ctx.resume();
 
             score = 0;
+            score = 0;
             lives = 3;
             level = 1;
+            levelsSinceLastGold = 0;
             scoreEl.textContent = score;
             livesEl.textContent = lives;
             levelEl.textContent = level;
@@ -794,7 +853,7 @@
 
             // Handle Back Button
             if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
-                window.location.href = 'index.html';
+                goHome(e);
                 handled = true;
             }
 
@@ -875,11 +934,16 @@
             launchBall();
         }
 
-        function spawnPowerup(x, y) {
+        function spawnPowerup(x, y, forceType = null) {
             const types = ['wide', 'fireball', 'plus3', 'multiply3'];
-            const type = types[Math.floor(Math.random() * types.length)];
+            const type = forceType || types[Math.floor(Math.random() * types.length)];
             let color = '#FFF';
             let symbol = '?';
+
+            if (type === 'coin') {
+                color = '#FFD700';
+                symbol = '$';
+            }
 
             if (type === 'wide') {
                 color = '#3498db';
@@ -909,8 +973,18 @@
         }
 
         function activatePowerup(type) {
-            SoundManager.playPowerUp();
+
             let text = "";
+
+            if (type === 'coin') {
+                SoundManager.playCoin();
+                if (typeof GoldManager !== 'undefined') {
+                    GoldManager.addCoins(1);
+                    text = "+1 GOLD";
+                }
+            } else {
+                SoundManager.playPowerUp();
+            }
 
             if (type === 'wide') {
                 paddle.width = 150;
@@ -979,23 +1053,34 @@
                                     return; // No damage, no score
                                 }
 
-                                if (ball.isFireball) {
-                                    // Fireball destroys instantly
-                                    b.hp = 0;
-                                    SoundManager.playFireball();
-                                } else {
-                                    ball.dy = -ball.dy;
-                                    b.hp--;
-                                    SoundManager.playHit();
-                                }
-
-                                if (b.hp <= 0) {
+                                if (b.isGold) {
+                                    // Gold Brick Logic
+                                    b.hp = 0; // 1 touch break
                                     b.status = 0;
                                     breakableBricksCount--;
-                                    score += 10 * level;
+                                    score += 50; // Bonus Score
                                     scoreEl.textContent = score;
-                                    if (b.isLucky) {
-                                        spawnPowerup(brickX + brickWidth / 2, brickY + brickHeight / 2);
+                                    SoundManager.playCoin();
+                                    spawnPowerup(brickX + brickWidth / 2, brickY + brickHeight / 2, 'coin');
+                                } else {
+                                    // Normal Damage
+                                    if (ball.isFireball) {
+                                        b.hp = 0;
+                                        SoundManager.playFireball();
+                                    } else {
+                                        ball.dy = -ball.dy;
+                                        b.hp--;
+                                        SoundManager.playHit();
+                                    }
+
+                                    if (b.hp <= 0) {
+                                        b.status = 0;
+                                        breakableBricksCount--;
+                                        score += 10 * level;
+                                        scoreEl.textContent = score;
+                                        if (b.isLucky) {
+                                            spawnPowerup(brickX + brickWidth / 2, brickY + brickHeight / 2);
+                                        }
                                     }
                                 }
                             }
@@ -1082,6 +1167,13 @@
                                 ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
                                 ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
                             }
+                        }
+
+                        // Gold Brick Bevel/Shine
+                        if (b.isGold) {
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                            ctx.fillRect(brickX, brickY, brickWidth, 5);
+                            ctx.fillRect(brickX, brickY, 5, brickHeight);
                         }
                     }
                 }
@@ -1180,6 +1272,11 @@
                         gameOverTitle.textContent = "GAME OVER!";
                         gameOverTitle.style.color = "#FF6B6B";
                         nameInput.style.display = 'none';
+                    }
+
+                    // Sync Data on Game Over
+                    if (typeof TimeManager !== 'undefined') {
+                        TimeManager.syncTimeRemote(true);
                     }
                 } else {
                     resetBall();
@@ -1288,6 +1385,15 @@
         function handleMobileInput(direction, pressed) {
             if (direction === 'left') leftPressed = pressed;
             if (direction === 'right') rightPressed = pressed;
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                // Sync data before leaving
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
         }
     </script>
     <script src="global.js"></script>

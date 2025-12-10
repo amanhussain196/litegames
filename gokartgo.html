@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1280, initial-scale=1">
     <title>Go Kart Go! | Man Games</title>
@@ -361,7 +362,9 @@
             <div class="score-box">🏁 <span id="score">0</span>m</div>
             <div class="score-box">❤️ <span id="health">3</span></div>
             <div class="score-box">⚙️ <span id="gear">1</span></div>
-            <div class="score-box">⚡ <span id="speed">0</span> km/h</div>
+            <div class="score-box">⚙️ <span id="gear">1</span></div>
+            <div class="score-box" style="min-width: 145px;">⚡ <span id="speed"
+                    style="display:inline-block; width: 40px; text-align:right;">0</span> km/h</div>
             <div class="score-box">
                 🚀
                 <div class="jump-bar-container">
@@ -404,7 +407,7 @@
         </div>
     </div>
 
-    <a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a>
+    <a href="#" class="btn btn-home" onclick="goHome(event)">🏠 BACK TO HOME</a>
 
     <script>
         // Check URL params for mode
@@ -483,6 +486,8 @@
         let score = 0;
         let highScore = 0;
         let isGameOver = false;
+        let lastThousands = 0;
+        let thousandsWithoutCoin = 0;
 
         // Road
         const roadWidth = 320; // 4 lanes * 80px
@@ -565,6 +570,8 @@
             particles = [];
 
             isGameOver = false;
+            lastThousands = 0;
+            thousandsWithoutCoin = 0;
             updateUI();
         }
 
@@ -619,6 +626,22 @@
             // Score
             score += speed * 0.1;
 
+            // --- Coin Logic (Every 1000m) ---
+            const currentThousands = Math.floor(score / 1000);
+            if (currentThousands > lastThousands) {
+                lastThousands = currentThousands;
+
+                // 30% chance OR Pity (2 misses)
+                if (Math.random() < 0.30 || thousandsWithoutCoin >= 2) {
+                    spawnCoin();
+                    thousandsWithoutCoin = 0;
+                    console.log("Coin Spawned!");
+                } else {
+                    thousandsWithoutCoin++;
+                    console.log("No Coin. Pity:", thousandsWithoutCoin);
+                }
+            }
+
             // --- Player Movement ---
             player.targetX = roadX + (player.lane * laneWidth) + (laneWidth / 2);
             player.x += (player.targetX - player.x) * 0.2;
@@ -638,7 +661,10 @@
 
             // --- Spawning ---
             if (Math.random() < 0.03) spawnTraffic();
-            if (Math.random() < 0.01) spawnCoin();
+            // --- Spawning ---
+            if (Math.random() < 0.03) spawnTraffic();
+            // Coins logic is handled above by distance
+            // if (Math.random() < 0.01) spawnCoin();
 
             updateObstacles();
             updateCoins();
@@ -686,7 +712,7 @@
                 x: x,
                 y: -100,
                 radius: 10,
-                color: '#FFCE54'
+                color: '#FFD700' // Gold
             });
         }
 
@@ -735,6 +761,11 @@
                 finalScoreEl.textContent = Math.floor(score);
                 gameOverModal.style.display = 'block';
 
+                // Sync Data on Game Over
+                if (typeof TimeManager !== 'undefined') {
+                    TimeManager.syncTimeRemote(true);
+                }
+
                 // Focus restart button
                 setTimeout(() => {
                     const btn = gameOverModal.querySelector('button');
@@ -752,7 +783,10 @@
                     // Can collect coins while jumping? Sure.
                     score += 50;
                     SoundManager.playCoin();
-                    createParticles(coin.x, coin.y, '#FFCE54', 5);
+                    if (typeof GoldManager !== 'undefined') {
+                        GoldManager.addCoins(1);
+                    }
+                    createParticles(coin.x, coin.y, '#FFD700', 5);
                     coins.splice(i, 1);
                 } else if (coin.y > canvas.height) {
                     coins.splice(i, 1);
@@ -854,6 +888,13 @@
                 ctx.strokeStyle = '#F6BB42';
                 ctx.lineWidth = 2;
                 ctx.stroke();
+
+                // Dollar Symbol
+                ctx.fillStyle = '#B8860B';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', coin.x, coin.y + 1);
             });
 
             // Obstacles
@@ -935,7 +976,7 @@
         function jump() {
             if (player.jumpCharge >= 100 && !player.isJumping) {
                 player.isJumping = true;
-                player.jumpVelocity = 12;
+                player.jumpVelocity = 15; // Increased from 12
                 player.jumpCharge = 0;
                 SoundManager.playJump();
             }
@@ -966,7 +1007,7 @@
 
             // Handle Back Button
             if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
-                window.location.href = 'index.html';
+                goHome(e);
                 handled = true;
             }
 
@@ -1087,6 +1128,15 @@
 
         // Start screen focus
         showStartScreen();
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                // Sync data before leaving
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
 
     </script>
     <script src="global.js"></script>

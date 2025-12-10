@@ -272,7 +272,7 @@
         <div id="fireBtn" class="fire-btn">🔥</div>
     </div>
 
-    <a href="index.html" class="btn btn-home">🏠 BACK TO HOME</a>
+    <a href="#" class="btn btn-home" onclick="goHome(event)">🏠 BACK TO HOME</a>
 
     <script>
         // Sound Manager
@@ -341,6 +341,11 @@
             playPowerup() {
                 this.playTone(600, 'sine', 0.1, 0.1);
                 setTimeout(() => this.playTone(900, 'sine', 0.2, 0.1), 100);
+            },
+
+            playCoin() {
+                this.playTone(1000, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(1500, 'sine', 0.2, 0.1), 100);
             }
         };
 
@@ -371,6 +376,7 @@
         let lives = 3;
         let isGameOver = false;
         let frameCount = 0;
+        let bossesSinceLastCoin = 0;
 
         // Player
         const player = {
@@ -531,6 +537,8 @@
             player.bulletCount = 1;
             player.x = canvas.width / 2;
             player.summon = { active: false, level: 0, x: 0, y: 0, angle: 0, bossData: null, shootTimer: 0 };
+
+            bossesSinceLastCoin = 0;
 
             bullets = [];
             enemyBullets = [];
@@ -840,9 +848,9 @@
                     vy: -20, // Very fast
                     color: '#FF0000',
                     type: 'laser',
-                    width: 10,
+                    width: 6, // Thinner streak
                     height: 60,
-                    damage: 5, // High damage
+                    damage: 2.5, // Reduced from 5
                     penetrate: true
                 });
                 return;
@@ -854,9 +862,22 @@
                     y: player.y - 20,
                     vx: 0,
                     vy: -5,
-                    color: '#00FF00',
+                    color: '#00FF00', // Green circle
                     type: 'tracking',
-                    damage: 0.5 // Increased from 0.25
+                    damage: 0.5 // Half of normal? Normal was 1, so 0.5. Old tracking was 0.5 too.
+                });
+                return;
+            }
+
+            if (player.weaponType === 'tracking2') {
+                bullets.push({
+                    x: player.x,
+                    y: player.y - 20,
+                    vx: 0,
+                    vy: -5,
+                    color: '#FF4500', // Red Fireball
+                    type: 'tracking2',
+                    damage: 1.0 // Double damage of tracking
                 });
                 return;
             }
@@ -864,21 +885,22 @@
             // Normal Weapon (B1, B2, B3, B4)
             let count = player.bulletCount;
             let spread = 10;
+            let dmg = 0.5; // Reduced from 1
 
             if (count === 1) {
-                bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
+                bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
             } else if (count === 2) {
-                bullets.push({ x: player.x - 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x + 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
+                bullets.push({ x: player.x - 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x + 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
             } else if (count === 3) {
-                bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x - 15, y: player.y - 20, vx: -1, vy: -10, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x + 15, y: player.y - 20, vx: 1, vy: -10, color: '#4FC1E9', damage: 1 });
+                bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x - 15, y: player.y - 20, vx: -1, vy: -10, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x + 15, y: player.y - 20, vx: 1, vy: -10, color: '#4FC1E9', damage: dmg });
             } else if (count >= 4) {
-                bullets.push({ x: player.x - 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x + 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x - 20, y: player.y - 20, vx: -2, vy: -9, color: '#4FC1E9', damage: 1 });
-                bullets.push({ x: player.x + 20, y: player.y - 20, vx: 2, vy: -9, color: '#4FC1E9', damage: 1 });
+                bullets.push({ x: player.x - 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x + 10, y: player.y - 20, vx: 0, vy: -10, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x - 20, y: player.y - 20, vx: -2, vy: -9, color: '#4FC1E9', damage: dmg });
+                bullets.push({ x: player.x + 20, y: player.y - 20, vx: 2, vy: -9, color: '#4FC1E9', damage: dmg });
             }
         }
 
@@ -886,7 +908,7 @@
             for (let i = bullets.length - 1; i >= 0; i--) {
                 let b = bullets[i];
 
-                if (b.type === 'tracking') {
+                if (b.type === 'tracking' || b.type === 'tracking2') {
                     // Find nearest enemy
                     let nearest = null;
                     let minDst = Infinity;
@@ -1184,6 +1206,18 @@
                 player.summon.active = true;
                 player.summon.level++;
                 player.summon.bossData = e.originalData;
+
+                // Boss Coin Logic
+                // 30% chance OR Pity (1 miss)
+                if (Math.random() < 0.30 || bossesSinceLastCoin >= 1) {
+                    spawnPowerup(e.x, e.y, 'COIN');
+                    bossesSinceLastCoin = 0;
+                    console.log("Boss Dropped Coin!");
+                } else {
+                    bossesSinceLastCoin++;
+                    console.log("Boss No Coin. Pity:", bossesSinceLastCoin);
+                }
+
             } else if (e.type === 'tank') {
                 SoundManager.playExplosionHeavy();
             } else if (e.type === 'shooter' || e.type === 'zigzag') {
@@ -1200,9 +1234,23 @@
             }
         }
 
-        function spawnPowerup(x, y) {
-            let types = ['B2', 'B3', 'B4', 'LASER', 'TRACK'];
-            let type = types[Math.floor(Math.random() * types.length)];
+        function spawnPowerup(x, y, forceType = null) {
+            let types = [];
+
+            // Logic: 
+            // B4 only after 1st boss (Assuming boss every 5 waves, so wave > 5)
+            // No B2 after 1st boss
+            // TRACK2 after 2nd boss (wave > 10)
+
+            if (wave <= 5) {
+                types = ['B2', 'B3'];
+            } else if (wave <= 10) {
+                types = ['B3', 'B4', 'LASER', 'TRACK'];
+            } else {
+                types = ['B3', 'B4', 'LASER', 'TRACK2'];
+            }
+
+            let type = forceType || types[Math.floor(Math.random() * types.length)];
             powerups.push({ x: x, y: y, vy: 2, type: type });
         }
 
@@ -1227,6 +1275,13 @@
                         player.weaponType = 'laser';
                     } else if (p.type === 'TRACK') {
                         player.weaponType = 'tracking';
+                    } else if (p.type === 'TRACK2') {
+                        player.weaponType = 'tracking2';
+                    } else if (p.type === 'COIN') {
+                        SoundManager.playCoin();
+                        if (typeof GoldManager !== 'undefined') {
+                            GoldManager.addCoins(1);
+                        }
                     }
 
                     powerups.splice(i, 1);
@@ -1325,6 +1380,15 @@
                     ctx.beginPath();
                     ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
                     ctx.fill();
+                } else if (b.type === 'tracking2') {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Glow
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = 'red';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
                 } else {
                     ctx.fillRect(b.x - 2, b.y - 5, 4, 10);
                 }
@@ -1411,15 +1475,27 @@
 
         function drawPowerups() {
             powerups.forEach(p => {
-                ctx.fillStyle = '#FFCE54';
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(p.type, p.x, p.y);
+                if (p.type === 'COIN') {
+                    ctx.fillStyle = '#FFD700'; // Gold
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#B8860B';
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', p.x, p.y + 1);
+                } else {
+                    ctx.fillStyle = '#FFCE54';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p.type, p.x, p.y);
+                }
             });
         }
 
@@ -1454,6 +1530,12 @@
                 nameInput.style.display = 'none';
             }
             gameOverModal.style.display = 'block';
+
+            // Sync Data on Game Over
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
+
             focusFirstButton(gameOverModal);
         }
 
@@ -1576,6 +1658,15 @@
                     document.exitFullscreen();
                 }
             }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                // Sync data before leaving
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
         }
     </script>
     <script src="global.js"></script>
