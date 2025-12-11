@@ -901,6 +901,8 @@
             <button id="muteBtn" class="btn-mute" onclick="MusicManager.toggleMute()"
                 aria-label="Toggle Mute">🔊</button>
             <a id="loginBtn" href="login.html" class="btn-login">JOIN NOW</a>
+            <button id="friendsBtn" class="btn-login" style="display:none; background: #4ECDC4; margin-right: 10px;"
+                onclick="FriendManager.openModal()">FRIENDS</button>
             <button id="logoutBtn" class="btn-login" style="display:none; background: #ff4757;"
                 onclick="AuthManager.logout()">LOGOUT</button>
         </div>
@@ -918,10 +920,17 @@
                     logoutBtn.style.display = 'inline-block';
                     logoutBtn.textContent = 'LOGOUT (' + user + ')';
                 }
+                const friendsBtn = document.getElementById('friendsBtn');
+                if (friendsBtn) friendsBtn.style.display = 'inline-block';
             } else {
                 if (loginBtn) loginBtn.style.display = 'inline-block';
                 if (logoutBtn) logoutBtn.style.display = 'none';
+                const friendsBtn = document.getElementById('friendsBtn');
+                if (friendsBtn) friendsBtn.style.display = 'none';
             }
+
+            // Ensure FriendManager updates visibility too
+            if (window.FriendManager) window.FriendManager.updateButtonVisibility();
         });
     </script>
 
@@ -1397,7 +1406,454 @@
         <div class="key-item"><span class="key">6</span>Right</div>
         <div class="key-item"><span class="key">5</span>Select</div>
     </div>
-    <script> // Background Music Logic
+
+    <style>
+        /* Friend System Styles */
+        .friend-search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .friend-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+        }
+
+        .friend-section-title {
+            text-align: left;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 15px 0 10px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #eee;
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .friend-avatar {
+            width: 40px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .friend-coins {
+            font-size: 0.85rem;
+            color: #f1c40f;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: transform 0.2s;
+            color: white;
+        }
+
+        .btn-add {
+            background: var(--secondary);
+        }
+
+        .btn-accept {
+            background: var(--secondary);
+            margin-right: 5px;
+        }
+
+        .btn-reject {
+            background: #ff4757;
+        }
+
+        .btn-pending {
+            background: #ccc;
+            cursor: default;
+        }
+
+        .friend-list-container {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <!-- Friends Modal -->
+    <div id="friendsModal" class="device-modal-overlay" style="display: none;"
+        onclick="if(event.target === this) document.getElementById('friendsModal').style.display='none'">
+        <div class="device-modal" style="max-width: 500px; padding: 2rem;">
+            <div style="text-align: right; margin-bottom: -10px;">
+                <button onclick="document.getElementById('friendsModal').style.display='none'"
+                    style="background:none; border:none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+            <h2 style="color: var(--secondary); margin-bottom: 20px;">Friends</h2>
+
+            <!-- Search -->
+            <div class="friend-search-box">
+                <input type="text" id="friendSearchInput" class="friend-input" placeholder="Search username...">
+                <button class="cta-btn" style="padding: 10px 20px; font-size: 1rem;"
+                    onclick="FriendManager.searchUser()">🔍</button>
+            </div>
+            <div id="friendSearchResult"></div>
+
+            <!-- Requests -->
+            <div id="friendRequestsSection" style="display: none;">
+                <h4 class="friend-section-title">Friend Requests</h4>
+                <div id="friendRequestsList" class="friend-list-container"></div>
+            </div>
+
+            <!-- List -->
+            <h4 class="friend-section-title">My Friends</h4>
+            <div id="friendsList" class="friend-list-container">
+                <div style="color: #999; padding: 20px;">Loading friends...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FriendManager = {
+            currentUser: null,
+
+            supabase: null,
+
+            init() {
+                // Verify auth on load
+                this.getStringParams();
+                this.updateButtonVisibility();
+            },
+
+            getStringParams() {
+                let userJson = localStorage.getItem('supabase.auth.token');
+                if (!userJson) userJson = localStorage.getItem('sb-rydsgfbhbhenquxqvdct-auth-token');
+
+                if (userJson) {
+                    try {
+                        const session = JSON.parse(userJson);
+                        this.currentUser = session.user;
+                    } catch (e) { console.error("Auth token parse error", e); }
+                }
+            },
+
+            getClient() {
+                if (this.supabase) return this.supabase;
+
+                // 1. Try global 'supabase' variable (from auth.js)
+                try {
+                    if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
+                        this.supabase = supabase;
+                        return this.supabase;
+                    }
+                } catch (e) { }
+
+                // 2. Create new using window.supabase (The Library)
+                if (window.supabase && window.supabase.createClient) {
+                    console.log("FriendManager: Creating new client on demand");
+                    this.supabase = window.supabase.createClient('https://rydsgfbhbhenquxqvdct.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5ZHNnZmJoYmhlbnF1eHF2ZGN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwOTgyMDAsImV4cCI6MjA4MDY3NDIwMH0.nN6MvxbJvUaxEmL-xCk-9DcRKGqWDHUw09xFid9qgQU');
+                    return this.supabase;
+                }
+
+                console.error("FriendManager: Could not find Supabase library");
+                return null;
+            },
+
+            updateButtonVisibility() {
+                const btn = document.getElementById('friendsBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (localStorage.getItem('user_name') || this.currentUser) {
+                    if (btn) btn.style.display = 'inline-block';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                } else {
+                    if (btn) btn.style.display = 'none';
+                }
+            },
+
+            openModal() {
+                // Re-check user
+                let userJson = localStorage.getItem('supabase.auth.token');
+                if (!userJson) userJson = localStorage.getItem('sb-rydsgfbhbhenquxqvdct-auth-token');
+
+                if (userJson) {
+                    const session = JSON.parse(userJson);
+                    this.currentUser = session.user;
+                } else {
+                    alert("Please login first!");
+                    return;
+                }
+
+                document.getElementById('friendsModal').style.display = 'flex';
+                this.fetchFriends();
+                this.fetchRequests();
+            },
+
+            async searchUser() {
+                const input = document.getElementById('friendSearchInput');
+                const resultDiv = document.getElementById('friendSearchResult');
+                const username = input.value.trim();
+
+                if (!username) return;
+                if (!this.currentUser) return alert("Please login first");
+
+                resultDiv.innerHTML = '<div style="padding:10px;">Searching...</div>';
+
+                try {
+                    // 1. Find User
+                    const sb = this.getClient();
+                    if (!sb) throw new Error("Supabase client init failed. Try refreshing.");
+
+                    const { data: user, error } = await sb
+                        .from('users_profile')
+                        .select('*')
+                        .ilike('username', username)
+                        .maybeSingle();
+
+                    if (error) {
+                        console.error("Search Error:", error);
+                        resultDiv.innerHTML = `<div style="padding:10px; color: red;">Search Error: ${error.message}</div>`;
+                        return;
+                    }
+
+                    if (!user) {
+                        resultDiv.innerHTML = '<div style="padding:10px; color: red;">User not found. (Check RLS policies if name is correct)</div>';
+                        return;
+                    }
+
+                    if (user.id === this.currentUser.id) {
+                        resultDiv.innerHTML = '<div style="padding:10px; color: orange;">That\'s you!</div>';
+                        return;
+                    }
+
+                    // 2. Check Friend Status
+                    let sentReq = null;
+                    let receivedReq = null;
+
+                    try {
+                        const { data: s } = await sb
+                            .from('friend_requests')
+                            .select('*')
+                            .eq('sender_id', this.currentUser.id)
+                            .eq('receiver_id', user.id)
+                            .maybeSingle();
+                        sentReq = s;
+
+                        const { data: r } = await sb
+                            .from('friend_requests')
+                            .select('*')
+                            .eq('sender_id', user.id)
+                            .eq('receiver_id', this.currentUser.id)
+                            .maybeSingle();
+                        receivedReq = r;
+                    } catch (statusErr) {
+                        console.warn("Friend status check failed (likely table missing)", statusErr);
+                    }
+
+                    let actionHtml = `<button class="btn-action btn-add" onclick="FriendManager.sendRequest('${user.id}')">Add Friend</button>`;
+
+                    if (sentReq) {
+                        if (sentReq.status === 'pending') actionHtml = `<button class="btn-action btn-pending">Request Sent</button>`;
+                        if (sentReq.status === 'accepted') actionHtml = `<span style="color:green;">Already Friends</span>`;
+                    }
+                    if (receivedReq) {
+                        if (receivedReq.status === 'pending') actionHtml = `<span style="font-size:0.8rem;">They requested you! Check below.</span>`;
+                        if (receivedReq.status === 'accepted') actionHtml = `<span style="color:green;">Already Friends</span>`;
+                    }
+
+                    resultDiv.innerHTML = `
+                    <div class="friend-item" style="background: #eefbee; border-color: #bee;">
+                        <div class="friend-info">
+                            <div class="friend-avatar">👤</div>
+                            <div>
+                                <div style="font-weight:bold;">${user.username}</div>
+                                <div class="friend-coins">💰 ${user.gold_coins || 0}</div>
+                            </div>
+                        </div>
+                        ${actionHtml}
+                    </div>
+                `;
+
+                } catch (e) {
+                    console.error(e);
+                    resultDiv.innerHTML = `<div style="padding:10px; color: red;">Error: ${e.message}</div>`;
+                }
+            },
+
+            async sendRequest(targetId) {
+                if (!this.currentUser) return;
+                try {
+                    const sb = this.getClient();
+                    if (!sb) throw new Error("Supabase not init");
+
+                    const { error } = await sb
+                        .from('friend_requests')
+                        .insert({
+                            sender_id: this.currentUser.id,
+                            receiver_id: targetId,
+                            status: 'pending'
+                        });
+
+                    if (error) throw error;
+                    this.searchUser(); // Refresh UI
+                } catch (e) {
+                    alert("Failed to send request. (Table 'friend_requests' might be missing?)");
+                    console.error(e);
+                }
+            },
+
+            async fetchRequests() {
+                if (!this.currentUser) return;
+                const container = document.getElementById('friendRequestsList');
+                const section = document.getElementById('friendRequestsSection');
+
+                try {
+                    const sb = this.getClient();
+                    if (!sb) return; // Silent fail if not init
+
+                    const { data: requests, error } = await sb
+                        .from('friend_requests')
+                        .select('id, sender_id, status')
+                        .eq('receiver_id', this.currentUser.id)
+                        .eq('status', 'pending');
+
+                    if (error) throw error;
+
+                    if (requests && requests.length > 0) {
+                        section.style.display = 'block';
+                        container.innerHTML = '';
+
+                        for (let req of requests) {
+                            const { data: profile } = await this.supabase
+                                .from('users_profile')
+                                .select('username, gold_coins')
+                                .eq('id', req.sender_id)
+                                .single();
+
+                            if (profile) {
+                                container.innerHTML += `
+                                <div class="friend-item">
+                                    <div class="friend-info">
+                                        <div class="friend-avatar">📩</div>
+                                        <div>
+                                            <div style="font-weight:bold;">${profile.username}</div>
+                                            <div class="friend-coins">💰 ${profile.gold_coins || 0}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button class="btn-action btn-accept" onclick="FriendManager.respond('${req.id}', true)">Accept</button>
+                                        <button class="btn-action btn-reject" onclick="FriendManager.respond('${req.id}', false)">Delete</button>
+                                    </div>
+                                </div>
+                            `;
+                            }
+                        }
+                    } else {
+                        section.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async respond(requestId, accept) {
+                try {
+                    if (accept) {
+                        await this.supabase
+                            .from('friend_requests')
+                            .update({ status: 'accepted' })
+                            .eq('id', requestId);
+                    } else {
+                        await this.supabase
+                            .from('friend_requests')
+                            .delete()
+                            .eq('id', requestId);
+                    }
+                    this.fetchRequests();
+                    this.fetchFriends();
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async fetchFriends() {
+                if (!this.currentUser) return;
+                const container = document.getElementById('friendsList');
+                container.innerHTML = 'Loading...';
+
+                try {
+                    // Find all accepted requests involving me
+                    const { data: friendships, error } = await this.supabase
+                        .from('friend_requests')
+                        .select('*')
+                        .eq('status', 'accepted')
+                        .or(`sender_id.eq.${this.currentUser.id},receiver_id.eq.${this.currentUser.id}`);
+
+                    if (error) throw error;
+
+                    if (!friendships || friendships.length === 0) {
+                        container.innerHTML = '<div style="padding:10px; color:#777;">No friends yet. Search to add some!</div>';
+                        return;
+                    }
+
+                    container.innerHTML = '';
+
+                    for (let f of friendships) {
+                        let otherId = (f.sender_id === this.currentUser.id) ? f.receiver_id : f.sender_id;
+
+                        const { data: profile } = await this.supabase
+                            .from('users_profile')
+                            .select('username, gold_coins')
+                            .eq('id', otherId)
+                            .single();
+
+                        if (profile) {
+                            container.innerHTML += `
+                                <div class="friend-item">
+                                    <div class="friend-info">
+                                        <div class="friend-avatar">🙂</div>
+                                        <div>
+                                            <div style="font-weight:bold;">${profile.username}</div>
+                                            <div class="friend-coins">💰 ${profile.gold_coins || 0}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    container.innerHTML = 'Error loading friends.';
+                }
+            }
+        };
+
+        // Background Music Logic
 
         const MusicManager = {
             audio: null,
@@ -1697,6 +2153,8 @@
                     innerLink.setAttribute('tabindex', '-1');
                 }
             });
+
+            if (window.FriendManager) window.FriendManager.init();
 
             enableTVNavigation();
 

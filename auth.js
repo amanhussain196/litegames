@@ -18,6 +18,11 @@ const AuthManager = {
     async checkUsername(username) {
         if (!username || username.length < 4) return { available: false, message: 'Too short' };
 
+        const usernameRegex = /^[a-zA-Z0-9._]+$/;
+        if (!usernameRegex.test(username)) {
+            return { available: false, message: 'Only letters, numbers, . and _ allowed (No spaces)' };
+        }
+
         try {
             const { data, error } = await supabase
                 .from('users_profile')
@@ -65,6 +70,11 @@ const AuthManager = {
     // Sign Up
     async signUp(username, email, password) {
         try {
+            const usernameRegex = /^[a-zA-Z0-9._]+$/;
+            if (!usernameRegex.test(username)) {
+                return { success: false, message: 'Invalid username format. No spaces allowed.' };
+            }
+
             // 1. Create Auth User
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: email,
