@@ -1721,8 +1721,8 @@
                     if (error) throw error;
                     this.searchUser(); // Refresh UI
                 } catch (e) {
-                    alert("Failed to send request. (Table 'friend_requests' might be missing?)");
-                    console.error(e);
+                    console.error("Send request failed:", e);
+                    alert(`Failed to send request: ${e.message || e.error_description || "Unknown error"}`);
                 }
             },
 
