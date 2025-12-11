@@ -9,8 +9,81 @@ const ZoomManager = {
         if (savedZoom) {
             this.zoomLevel = parseFloat(savedZoom);
         }
+        this.createUI();
         this.applyZoom();
         console.log('ZoomManager initialized. Level:', this.zoomLevel);
+    },
+
+    createUI: function () {
+        // If buttons already exist (like in index.html), don't do anything
+        if (document.querySelector('.btn-zoom')) return;
+
+        // 1. Inject CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .tm-zoom-controls {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                z-index: 9998; /* Just below modals */
+            }
+            .btn-zoom {
+                background: rgba(255, 255, 255, 0.9);
+                color: #2D3436;
+                border: 3px solid #4ECDC4;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                font-size: 1.2rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: all 0.2s;
+                font-family: 'Fredoka', sans-serif;
+                font-weight: bold;
+                box-shadow: 0 4px 0 rgba(78, 205, 196, 0.2);
+                padding: 0;
+            }
+            .btn-zoom:hover {
+                background: #4ECDC4;
+                color: white;
+                border-color: #4ECDC4;
+                transform: scale(1.1) translateY(-2px);
+                box-shadow: 0 6px 0 rgba(78, 205, 196, 0.2);
+            }
+            .btn-zoom:active {
+                transform: scale(0.95) translateY(2px);
+                box-shadow: 0 2px 0 rgba(78, 205, 196, 0.2);
+            }
+            .btn-zoom svg {
+                width: 20px;
+                height: 20px;
+                stroke-width: 2.5;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 2. Create Container
+        const container = document.createElement('div');
+        container.className = 'tm-zoom-controls';
+
+        // 3. Create Buttons
+        container.innerHTML = `
+            <button class="btn-zoom" onclick="ZoomManager.zoomOut()" aria-label="Zoom Out">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            </button>
+            <button class="btn-zoom" onclick="ZoomManager.zoomIn()" aria-label="Zoom In">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            </button>
+        `;
+
+        document.body.appendChild(container);
+
+        // Note: TimeManager will run later, find these buttons, and append the timer to this container automatically.
     },
 
     zoomIn: function () {
@@ -382,27 +455,27 @@ const TimeManager = {
             .single();
 
         if (data) {
+            // Integrate Gold Manager Load FIRST so we have the current coin count
+            GoldManager.loadFromProfile(data);
+
             const today = new Date().toDateString();
 
             // Check Server Reset Date
             if (data.last_reset_date !== today) {
-                // New Day on Server -> Reset to limit (or keep if default is null?)
-                // If it's a new day, we reset.
+                // New Day on Server -> Reset to limit
                 console.log("New day detected from server. Resetting.");
                 this.remainingSeconds = this.DAILY_LIMIT;
+
+                // Reset gold daily limit BEFORE syncing
+                GoldManager.resetDaily();
+
                 // We should update server immediately to mark today as visited
                 this.syncTimeRemote(true);
-
-                // Also reset gold daily limit
-                GoldManager.resetDaily();
             } else {
                 // Same day, use server time
                 // Handle case where server says null (new user) -> use default
                 this.remainingSeconds = data.remaining_seconds != null ? data.remaining_seconds : this.DAILY_LIMIT;
             }
-
-            // Integrate Gold Manager Load
-            GoldManager.loadFromProfile(data);
 
             // Update local storage to match server (trust server, unless local forced override)
             if (!GoldManager.pendingSync) {

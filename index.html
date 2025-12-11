@@ -80,13 +80,14 @@
         }
 
         .logo {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: var(--primary);
             text-shadow: 2px 2px 0px var(--accent);
             letter-spacing: 1px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 15px;
             line-height: 1;
         }
 
@@ -95,7 +96,9 @@
             color: var(--text-muted);
             text-shadow: none;
             letter-spacing: normal;
-            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         nav ul {
@@ -682,6 +685,179 @@
             height: 20px;
             stroke-width: 2.5;
         }
+
+        /* Leaderboard Section */
+        .leaderboard-section {
+            padding: 3rem 5%;
+            max-width: 1000px;
+            margin: 0 auto 3rem;
+            text-align: center;
+        }
+
+        .leaderboard-card {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 4px solid var(--primary);
+        }
+
+        .leaderboard-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: bold;
+        }
+
+        .leaderboard-list {
+            padding: 1rem;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            transform: scale(1.02);
+            background: #e3f2fd;
+        }
+
+        .rank-badge {
+            width: 30px;
+            height: 30px;
+            background: #ddd;
+            color: #555;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-right: 15px;
+        }
+
+        .rank-1 .rank-badge {
+            background: #FFD700;
+            color: #B8860B;
+        }
+
+        .rank-2 .rank-badge {
+            background: #C0C0C0;
+            color: #7f8c8d;
+        }
+
+        .rank-3 .rank-badge {
+            background: #CD7F32;
+            color: #8B4513;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .coin-count {
+            color: #000;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 1.1rem;
+        }
+
+        /* Screenshot Slider (Carousel) */
+        .slider-section {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .carousel-item {
+            position: absolute;
+            width: 350px;
+            /* Fixed width for square */
+            height: 350px;
+            /* Fixed height for square */
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            background: #fff;
+            border: 5px solid white;
+            cursor: grab;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1/1;
+            /* Enforce square */
+        }
+
+        .carousel-item:active {
+            cursor: grabbing;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            /* Prevent drag issues */
+        }
+
+        .carousel-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .carousel-caption h3 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 2rem;
+            margin: 0;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        @media (max-width: 768px) {
+            .carousel-container {
+                height: 320px;
+            }
+
+            .carousel-item {
+                width: 250px;
+                height: 250px;
+            }
+
+            .carousel-caption h3 {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 
@@ -690,12 +866,11 @@
     <header>
         <div class="logo">
             litegames.fun
-            <div
-                style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-shadow: none; letter-spacing: normal;">
-                <span>by</span>
+            <span>
+                by
                 <img src="assets/manstudios_logo.jpg" alt="Man Studios"
-                    style="height: 40px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            </div>
+                    style="height: 40px; width: 40px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            </span>
         </div>
         <nav>
             <ul>
@@ -752,12 +927,260 @@
 
     <section class="hero">
         <div class="hero-content">
-            <h1>PLAY. LAUGH. <br><span>WIN BIG!</span></h1>
+            <h1>PLAY. COMPETE. <br><span>CHALLENGE!</span></h1>
             <p>Jump into a world of endless fun! Discover 50+ amazing games and challenge your
                 friends today.</p>
             <a href="#games" class="cta-btn">PLAY NOW!</a>
         </div>
     </section>
+
+    <!-- Leaderboard Section -->
+    <section class="leaderboard-section">
+        <div class="leaderboard-card">
+            <div class="leaderboard-header">🏆 Top 10 Coin Masters</div>
+            <div class="leaderboard-list" id="leaderboardList">
+                <div style="padding: 20px;">Loading top players...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D Carousel Section -->
+    <div class="section-header" style="margin-bottom: 2rem; margin-top: 4rem;">
+        <h2 class="section-title">HOW TO EARN GOLD ?</h2>
+    </div>
+    <section class="slider-section">
+        <div class="carousel-container" id="carouselContainer">
+            <!-- Slide 1 -->
+            <div class="carousel-item">
+                <img src="assets/slide/Screenshot 2025-12-11 104105.jpg" alt="Smash Gold Bricks">
+                <div class="carousel-caption" style="color: #FFD700;">
+                    <h3>Snack on Gold!</h3> <!-- Swapped Text: This was originally "Smash Gold Bricks!" -->
+                </div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <img src="assets/slide/Screenshot 2025-12-11 104354.jpg" alt="Snack on Gold">
+                <div class="carousel-caption" style="color: #4ECDC4;">
+                    <h3>Smash Gold Bricks!</h3> <!-- Swapped Text: This was originally "Snack on Gold!" -->
+                </div>
+            </div>
+            <!-- Slide 3 -->
+            <div class="carousel-item">
+                <img src="assets/slide/Screenshot 2025-12-11 104629.jpg" alt="Boss Loot Drop">
+                <div class="carousel-caption" style="color: #FF6B6B;">
+                    <h3>Boss Loot Drop!</h3>
+                </div>
+            </div>
+            <!-- Slide 4 -->
+            <div class="carousel-item">
+                <img src="assets/slide/Screenshot 2025-12-11 104816.jpg" alt="Stack to the Sky">
+                <div class="carousel-caption" style="color: #FFE66D;">
+                    <h3>Stack to the Sky!</h3>
+                </div>
+            </div>
+            <!-- Slide 5 -->
+            <div class="carousel-item">
+                <img src="assets/slide/Screenshot 2025-12-11 104954.jpg" alt="Win Big">
+                <div class="carousel-caption" style="color: #fff;">
+                    <h3>Win Big Everyday!</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        async function fetchLeaderboard() {
+            if (!window.supabase) {
+                console.warn("Supabase not available for leaderboard");
+                return;
+            }
+
+            try {
+                // Use the global client from auth.js/global.js or recreate
+                const sb = window.supabase.createClient('https://rydsgfbhbhenquxqvdct.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5ZHNnZmJoYmhlbnF1eHF2ZGN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwOTgyMDAsImV4cCI6MjA4MDY3NDIwMH0.nN6MvxbJvUaxEmL-xCk-9DcRKGqWDHUw09xFid9qgQU');
+
+                const { data, error } = await sb
+                    .from('users_profile')
+                    .select('username, gold_coins')
+                    .order('gold_coins', { ascending: false })
+                    .limit(10);
+
+                const listEl = document.getElementById('leaderboardList');
+
+                if (error) throw error;
+
+                if (data) {
+                    listEl.innerHTML = '';
+                    data.forEach((player, index) => {
+                        const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                        const html = `
+                            <div class="leaderboard-item ${rankClass}">
+                                <div class="player-info">
+                                    <div class="rank-badge">${index + 1}</div>
+                                    <span>${player.username || 'Anonymous'}</span>
+                                </div>
+                                <div class="coin-count">
+                                    <span>${(player.gold_coins || 0).toLocaleString()}</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#B8860B" font-size="12" font-weight="bold" stroke="none">$</text></svg>
+                                </div>
+                            </div>
+                        `;
+                        listEl.innerHTML += html;
+                    });
+                }
+            } catch (err) {
+                console.error("Leaderboard error:", err);
+                document.getElementById('leaderboardList').innerHTML = '<div style="color: red; padding: 20px;">Failed to load leaderboard.</div>';
+            }
+        }
+
+        // 3D Carousel Logic
+        class Carousel {
+            constructor() {
+                this.container = document.querySelector('.carousel-container');
+                this.items = Array.from(document.querySelectorAll('.carousel-item'));
+                this.currentIndex = 0;
+                this.total = this.items.length;
+                this.isDragging = false;
+                this.startX = 0;
+                this.autoRotateInterval = null;
+
+                if (!this.container || this.total === 0) return;
+
+                // Init
+                this.update();
+                this.startAutoRotate();
+
+                // Events - Mouse
+                this.container.addEventListener('mousedown', (e) => this.startDrag(e.clientX));
+                this.container.addEventListener('mousemove', (e) => this.drag(e.clientX));
+                this.container.addEventListener('mouseup', () => this.endDrag());
+                this.container.addEventListener('mouseleave', () => this.endDrag());
+
+                // Events - Touch
+                this.container.addEventListener('touchstart', (e) => this.startDrag(e.touches[0].clientX));
+                this.container.addEventListener('touchmove', (e) => this.drag(e.touches[0].clientX));
+                this.container.addEventListener('touchend', () => this.endDrag());
+
+                // Click navigation
+                this.container.addEventListener('click', (e) => {
+                    const target = e.target.closest('.carousel-item');
+                    if (!target) return;
+
+                    if (target.classList.contains('next')) {
+                        this.next();
+                        this.startAutoRotate();
+                    }
+                    if (target.classList.contains('prev')) {
+                        this.prev();
+                        this.startAutoRotate();
+                    }
+                });
+            }
+
+            update() {
+                this.items.forEach((item, index) => {
+                    item.className = 'carousel-item'; // Reset classes
+
+                    let offset = index - this.currentIndex;
+                    if (offset < -Math.floor(this.total / 2)) offset += this.total;
+                    if (offset > Math.floor(this.total / 2)) offset -= this.total;
+
+                    if (offset === 0) {
+                        item.classList.add('active');
+                        item.style.transform = `translateX(0) scale(1.1)`;
+                        item.style.zIndex = 10;
+                        item.style.opacity = 1;
+                    } else if (offset === 1) {
+                        item.classList.add('next');
+                        item.style.transform = `translateX(60%) scale(0.85)`;
+                        item.style.zIndex = 5;
+                        item.style.opacity = 0.6;
+                    } else if (offset === -1) {
+                        item.classList.add('prev');
+                        item.style.transform = `translateX(-60%) scale(0.85)`;
+                        item.style.zIndex = 5;
+                        item.style.opacity = 0.6;
+                    } else {
+                        // Hidden/Far side
+                        // Distribute them behind or hide them
+                        // For >3 items, we can hide them or stack them far back
+                        item.style.transform = `translateX(${offset * 50}%) scale(0.5)`;
+                        item.style.zIndex = 1;
+                        item.style.opacity = 0;
+                        item.style.pointerEvents = 'none';
+                    }
+                });
+            }
+
+            next() {
+                this.currentIndex = (this.currentIndex + 1) % this.total;
+                this.update();
+            }
+
+            prev() {
+                this.currentIndex = (this.currentIndex - 1 + this.total) % this.total;
+                this.update();
+            }
+
+            startAutoRotate() {
+                this.stopAutoRotate();
+                this.autoRotateInterval = setInterval(() => this.next(), 3000);
+            }
+
+            stopAutoRotate() {
+                if (this.autoRotateInterval) clearInterval(this.autoRotateInterval);
+            }
+
+            startDrag(x) {
+                this.isDragging = true;
+                this.startX = x;
+                this.stopAutoRotate();
+            }
+
+            drag(x) {
+                if (!this.isDragging) return;
+                // Currently just tracking start/end for swipe
+            }
+
+            endDrag() {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+
+                // Simple click/drag releases usually handled by click event for next/prev
+                // But we can add swipe detection here if needed using stored coordinates
+                this.startAutoRotate();
+            }
+        }
+
+        // Touch Swipe extension
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLeaderboard();
+            setInterval(fetchLeaderboard, 30000);
+
+            // Init Carousel
+            window.myCarousel = new Carousel();
+
+            // Global Swipe Listener for carousel
+            const cContainer = document.querySelector('.carousel-container');
+            if (cContainer) {
+                cContainer.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    if (window.myCarousel) window.myCarousel.stopAutoRotate();
+                });
+
+                cContainer.addEventListener('touchend', e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    if (touchEndX < touchStartX - 50) window.myCarousel.next();
+                    if (touchEndX > touchStartX + 50) window.myCarousel.prev();
+                    if (window.myCarousel) window.myCarousel.startAutoRotate();
+                });
+            }
+        });
+    </script>
 
     <div class="stats-bar">
         <div class="stat-item">

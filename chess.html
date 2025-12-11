@@ -853,11 +853,11 @@
             if (moves.length === 0) return;
             let bestMove = null;
             if (currentDifficulty === 'easy') {
-                bestMove = moves[Math.floor(Math.random() * moves.length)];
-            } else if (currentDifficulty === 'medium') {
                 bestMove = getBestMove(2);
-            } else {
+            } else if (currentDifficulty === 'medium') {
                 bestMove = getBestMove(3);
+            } else {
+                bestMove = getBestMove(4);
             }
             if (bestMove) {
                 makeMove(bestMove);
