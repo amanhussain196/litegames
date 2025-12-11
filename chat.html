@@ -1,1 +1,955 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=1280,initial-scale=1"><title>Chat - litegames.fun</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script><style>:root{--bg-color:#E0F7FA;--card-bg:#ffffff;--primary:#FF6B6B;--secondary:#4ECDC4;--accent:#FFE66D;--text-main:#2D3436;--text-muted:#636e72;--chat-bubble-self:#4ECDC4;--chat-bubble-other:#f1f1f1;--selected-channel:#e3fdfb}body{font-family:Nunito,sans-serif;background-color:var(--bg-color);color:var(--text-main);display:flex;justify-content:center;align-items:center;height:100vh;margin:0;overflow:hidden}.chat-container{width:90%;max-width:1000px;height:90vh;background:var(--card-bg);border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.1);display:flex;overflow:hidden;position:relative}.sidebar{width:250px;background:#f8f9fa;border-right:1px solid #eee;display:flex;flex-direction:column;padding:20px;overflow-y:auto}.sidebar h2{font-family:Fredoka,sans-serif;color:var(--primary);margin-bottom:20px;font-size:1.5rem}.channel-section-title{font-size:.8rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:20px;margin-bottom:10px;font-weight:700}.channel-btn{padding:12px 15px;margin-bottom:5px;border-radius:10px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:10px;transition:all .2s;border:none;background:0 0;color:var(--text-muted);width:100%;text-align:left}.channel-btn:hover{background:#f0f0f0}.channel-btn.active{background:var(--selected-channel);color:var(--secondary);border-left:4px solid var(--secondary);box-shadow:0 2px 5px rgba(0,0,0,.05)}.online-dot{width:10px;height:10px;background-color:#2ecc71;border-radius:50%;margin-left:auto;box-shadow:0 0 5px #2ecc71;display:none}.channel-btn.online .online-dot{display:block}.chat-main{flex:1;display:flex;flex-direction:column;background-color:#fff;background-image:radial-gradient(#4ecdc4 1px,transparent 1px);background-size:30px 30px}.chat-header{padding:15px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.9)}.chat-header h3{margin:0;color:var(--text-main);display:flex;align-items:center;gap:10px}.chat-messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;scroll-behavior:smooth}.message{display:flex;flex-direction:column;max-width:70%}.message.self{align-self:flex-end;align-items:flex-end}.message.other{align-self:flex-start;align-items:flex-start}.message-bubble{padding:10px 15px;border-radius:15px;position:relative;word-wrap:break-word;line-height:1.4}.message-meta{font-size:.75rem;color:#aaa;margin-top:5px;padding:0 5px}.chat-input-area{padding:20px;background:#fff;border-top:1px solid #eee;display:flex;gap:10px}.chat-input{flex:1;padding:12px 15px;border-radius:25px;border:2px solid #eee;outline:0;transition:border-color .3s;font-family:inherit}.chat-input:focus{border-color:var(--secondary)}.send-btn{background:var(--primary);color:#fff;border:none;width:45px;height:45px;border-radius:50%;cursor:pointer;display:flex;justify-content:center;align-items:center;transition:transform .2s}.send-btn:hover{transform:scale(1.1)}.back-btn{margin-top:auto;padding:10px;text-align:center;color:var(--text-muted);text-decoration:none;font-size:.9rem;border-top:1px solid #eee;padding-top:20px}@keyframes fireGlow{0%{box-shadow:0 0 5px red,0 0 10px #ff4500;border-color:#ff4500}50%{box-shadow:0 0 15px red,0 0 20px #ff8c00;border-color:#ff8c00}100%{box-shadow:0 0 5px red,0 0 10px #ff4500;border-color:#ff4500}}.message-bubble.admin-fire{animation:fireGlow 1.5s infinite alternate;border:2px solid #ff4500!important;background:#2a2a2a!important;color:#fff!important;font-weight:700}.delete-btn{background:0 0;border:none;cursor:pointer;font-size:1rem;margin-left:8px;opacity:.7;transition:opacity .2s;padding:0}.delete-btn:hover{opacity:1;transform:scale(1.1)}.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:2000;backdrop-filter:blur(5px)}.modal-card{background:#fff;padding:30px;border-radius:20px;max-width:500px;width:90%;text-align:center;box-shadow:0 15px 30px rgba(0,0,0,.2);animation:popIn .3s ease-out}@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}.modal-title{font-family:Fredoka,sans-serif;color:var(--primary);font-size:1.8rem;margin-bottom:15px}.modal-text{color:var(--text-muted);margin-bottom:25px;line-height:1.6}.modal-btn{background:var(--secondary);color:#fff;border:none;padding:12px 30px;border-radius:50px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .2s}.modal-btn:hover{transform:scale(1.05)}@media (max-width:768px){.sidebar{display:none}.chat-container{width:100%;height:100%;border-radius:0}}</style></head><body><div id="disclaimerModal" class="modal-overlay"><div class="modal-card"><h2 class="modal-title">⚠️ Community Guidelines</h2><div class="modal-text"><p>Welcome to LiteGames Chat!</p><ul style="text-align:left;margin:15px 0;padding-left:20px"><li>Be respectful and kind to others.</li><li>Global messages & Private chats are cleared every 24 hours.</li><li>Private messages are end-to-end encrypted.</li></ul><p>By entering, you agree to these rules.</p></div><button class="modal-btn" onclick="acceptDisclaimer()">I Agree, Enter Chat</button><br><br><a href="index.html" style="color:#999;text-decoration:underline;font-size:.9rem">Go Back</a></div></div><div class="chat-container"><div class="sidebar"><h2>💬 Chat</h2><div id="custom-timer-location" style="margin-bottom:20px;display:flex;justify-content:center"></div><button class="channel-btn" onclick='switchChannel("broadcast")'><span style="font-size:1.2rem">⚡📢</span> Dev Broadcast</button> <button class="channel-btn active" onclick='switchChannel("global")'><span style="font-size:1.2rem">🌎</span> Global Chat</button><div class="channel-section-title">Private Messages</div><div id="friendsListContainer"><div style="text-align:center;color:#ccc;font-size:.9rem">Loading friends...</div></div><a href="index.html" class="back-btn">← Back to Games</a></div><div class="chat-main"><div class="chat-header"><h3 id="currentChatTitle">🌎 Global Chat</h3><span style="font-size:.8rem;color:#aaa">Resets daily at 12:00 AM</span></div><div class="chat-messages" id="messageList"><div style="text-align:center;color:#ccc;margin-top:50px">Loading messages...</div></div><div class="chat-input-area"><input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="280"> <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button></div></div></div><script src="auth.js"></script><script src="global.js"></script><script>const SECRET_KEY="LITEGAMES_SECURE_CHAT";let currentUser=null,activeChannel="global",activeFriendName="",friendsCache=[],subscription=null;const userStored=localStorage.getItem("user_name");userStored||(window.location.href="login.html");const messageList=document.getElementById("messageList"),chatInput=document.getElementById("chatInput"),friendsContainer=document.getElementById("friendsListContainer");function acceptDisclaimer(){document.getElementById("disclaimerModal").style.display="none",initApp()}async function initApp(){try{const{data:{user:e}}=await supabase.auth.getUser();if(!e)return alert("Session expired. Please login again."),void(window.location.href="login.html");currentUser=e,await fetchFriendsList(),initPresence(),switchChannel("global")}catch(e){console.error("Init Error:",e)}}function encryptMessage(e){return CryptoJS.AES.encrypt(e,SECRET_KEY).toString()}function decryptMessage(e){try{return CryptoJS.AES.decrypt(e,SECRET_KEY).toString(CryptoJS.enc.Utf8)}catch(e){return"[Error decrypting]"}}function getAvatar(e){const t=["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛","🐓","🦃","🦚","🦜","🦢","🦩","🕊","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿","🦔"];let n=0;for(let t=0;t<e.length;t++)n=e.charCodeAt(t)+((n<<5)-n);return{emoji:t[Math.abs(n)%t.length],color:`hsl(${Math.abs(n)%360}, 70%, 85%)`,borderColor:`hsl(${Math.abs(n)%360}, 70%, 40%)`}}let onlineUsers=new Set,presenceChannel=null;function initPresence(){presenceChannel=supabase.channel("global_presence",{config:{presence:{key:currentUser.id}}}),presenceChannel.on("presence",{event:"sync"},()=>{const e=presenceChannel.presenceState();onlineUsers.clear(),Object.keys(e).forEach(e=>{onlineUsers.add(e)}),renderFriendsList()}).subscribe(async e=>{"SUBSCRIBED"===e&&await presenceChannel.track({user_id:currentUser.id,online_at:(new Date).toISOString()})})}async function switchChannel(e,t=""){if(activeChannel=e,activeFriendName=t,document.querySelectorAll(".channel-btn").forEach(e=>e.classList.remove("active")),"global"===e)document.querySelector(".channel-btn[onclick=\"switchChannel('global')\"]").classList.add("active"),document.getElementById("currentChatTitle").innerHTML="🌎 Global Chat",chatInput.disabled=!1,chatInput.placeholder="Type a message...";else if("broadcast"===e){document.querySelector(".channel-btn[onclick=\"switchChannel('broadcast')\"]").classList.add("active"),document.getElementById("currentChatTitle").innerHTML="📢 Dev Broadcast (Admin Only)";localStorage.getItem("user_name")===ADMIN_USERNAME?(chatInput.disabled=!1,chatInput.placeholder="Broadcast a message..."):(chatInput.disabled=!0,chatInput.placeholder="Only GAMEDEV can post here.")}else{const n=document.getElementById(`friend-btn-${e}`);n&&n.classList.add("active");const s=getAvatar(t);s&&(document.getElementById("currentChatTitle").innerHTML=`${s.emoji} ${t}`),chatInput.disabled=!1,chatInput.placeholder="Type a message..."}messageList.innerHTML='<div style="text-align: center; color: #ccc; margin-top: 50px;">Loading...</div>',subscription&&await supabase.removeChannel(subscription),"global"===e?(loadGlobalMessages(),subscribeGlobal()):"broadcast"===e?(loadBroadcastMessages(),subscribeBroadcast()):(loadPrivateMessages(e),subscribePrivate(e))}async function fetchFriendsList(){const{data:e,error:t}=await supabase.from("friend_requests").select("*").eq("status","accepted").or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`);if(t||!e)return console.error("Friends fetch error:",t),void(friendsContainer.innerHTML='<div style="text-align:center; padding:10px; color:#aaa;">Error loading friends</div>');const n=e.map(e=>e.sender_id===currentUser.id?e.receiver_id:e.sender_id);if(0===n.length)return void renderFriendsList([]);const{data:s,error:a}=await supabase.from("users_profile").select("id, username").in("id",n);a?console.error("Profile fetch error:",a):(friendsCache=s,renderFriendsList())}function renderFriendsList(){if(!friendsCache||0===friendsCache.length)return void(friendsContainer.innerHTML='<div style="text-align:center; padding:10px; color:#aaa; font-size:0.8rem;">No friends yet. Add some in the dashboard!</div>');let e="";friendsCache.forEach(t=>{const n=getAvatar(t.username),s=onlineUsers.has(t.id)?"online":"";e+=`\n                    <button id="friend-btn-${t.id}" class="channel-btn ${s}" onclick="switchChannel('${t.id}', '${t.username}')">\n                        <span style="font-size: 1.2rem;">${n.emoji}</span> ${t.username}\n                        <div class="online-dot"></div>\n                    </button>\n                `}),friendsContainer.innerHTML=e}function getTodayFilter(){const e=new Date;return e.setHours(0,0,0,0),e.toISOString()}async function loadGlobalMessages(){const{data:e,error:t}=await supabase.from("global_chat").select("*").gte("created_at",getTodayFilter()).order("created_at",{ascending:!0}).limit(100);renderMessageBlock(e,t,"global")}const ADMIN_USERNAME="GAMEDEV";async function loadBroadcastMessages(){const{data:e,error:t}=await supabase.from("dev_broadcast").select("*").order("created_at",{ascending:!0});renderMessageBlock(e,t,"broadcast")}function subscribeBroadcast(){subscription=supabase.channel("dev_broadcast").on("postgres_changes",{event:"INSERT",schema:"public",table:"dev_broadcast"},e=>{appendMessage(e.new,"broadcast")}).on("postgres_changes",{event:"DELETE",schema:"public",table:"dev_broadcast"},e=>{const t=document.getElementById(`msg-${e.old.id}`);t&&t.remove()}).subscribe()}async function deleteMessage(e,t){if(!confirm("Are you sure you want to delete this message?"))return;let n="global_chat";"private"===t&&(n="private_chat"),"broadcast"===t&&(n="dev_broadcast");const{error:s}=await supabase.from(n).delete().eq("id",e);if(s)console.error("Delete failed:",s),alert("Failed to delete: "+s.message);else{const t=document.getElementById(`msg-${e}`);t&&t.remove()}}async function loadPrivateMessages(e){const{data:t,error:n}=await supabase.from("private_chat").select("*").gte("created_at",getTodayFilter()).or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${e}),and(sender_id.eq.${e},receiver_id.eq.${currentUser.id})`).order("created_at",{ascending:!0}).limit(100);t&&t.forEach(e=>{e.message=decryptMessage(e.message)}),renderMessageBlock(t,n,"private")}function renderMessageBlock(e,t,n){if(t)return console.error("Load Error:",t),void(messageList.innerHTML='<div style="text-align: center; color: red;">Error loading messages</div>');messageList.innerHTML="",e&&0!==e.length?e.forEach(e=>appendMessage(e,n)):messageList.innerHTML='<div style="text-align: center; color: #ccc; margin-top: 20px;">No messages today. Say hi!</div>',scrollToBottom()}function subscribeGlobal(){subscription=supabase.channel("global_chat").on("postgres_changes",{event:"INSERT",schema:"public",table:"global_chat"},e=>{appendMessage(e.new,"global")}).subscribe()}function subscribePrivate(e){subscription=supabase.channel("private_chat_room").on("postgres_changes",{event:"INSERT",schema:"public",table:"private_chat"},t=>{const n=t.new;(n.sender_id===e&&n.receiver_id===currentUser.id||n.sender_id===currentUser.id&&n.receiver_id===e)&&(n.message=decryptMessage(n.message),appendMessage(n,"private"))}).subscribe()}function appendMessage(e,t){messageList.innerHTML.includes("No messages")&&(messageList.innerHTML="");const n=e.user_id===currentUser.id||e.sender_id===currentUser.id;let s=e.username;"private"===t&&(s=n?"You":activeFriendName),"broadcast"===t&&(s=e.username||"GAMEDEV");const a=document.createElement("div");a.id=`msg-${e.id}`,a.className="message "+(n?"self":"other");const r=new Date(e.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),i=getAvatar(s||"Unknown"),c=s===ADMIN_USERNAME,o=c?"admin-fire":"",l=localStorage.getItem("user_name")===ADMIN_USERNAME;let d="";l&&(d=`<button class="delete-btn" onclick="deleteMessage('${e.id}', '${t}')" title="Delete Message">🗑️</button>`);let u=n?"background: var(--chat-bubble-self); color: white;":`background: ${i.color}; color: #333; border: 2px solid ${i.borderColor};`;c&&(u="");let g="";n&&"broadcast"!==t||(g=`<div class="message-meta" style="margin-bottom:2px; display:flex; align-items:center; gap:5px; justify-content: flex-start">\n                   <span style="font-size:1.2rem;">${i.emoji}</span> <b>${escapeHtml(s)}</b> \n                   ${d}\n                </div>`);let m="";l&&n&&"broadcast"!==t&&(m=d),a.innerHTML=`\n                ${g}\n                <div class="message-bubble ${o}" style="${u}">\n                    ${escapeHtml(e.message)}\n                </div>\n                <div class="message-meta" style="text-align: ${n?"right":"left"}">\n                    ${r} ${m}\n                </div>\n            `,messageList.appendChild(a),scrollToBottom()}async function sendMessage(){const e=chatInput.value.trim();if(!e)return;chatInput.value="";const t=localStorage.getItem("user_name")||"Unknown";if("global"===activeChannel){const{error:n}=await supabase.from("global_chat").insert([{user_id:currentUser.id,username:t,message:e}]);n&&alert("Failed: "+n.message)}else if("broadcast"===activeChannel){if(t!==ADMIN_USERNAME)return void alert("Only GAMEDEV can broadcast.");const{error:n}=await supabase.from("dev_broadcast").insert([{user_id:currentUser.id,username:ADMIN_USERNAME,message:e}]);n&&alert("Broadcast Failed: "+n.message)}else{const t=encryptMessage(e),{error:n}=await supabase.from("private_chat").insert([{sender_id:currentUser.id,receiver_id:activeChannel,message:t}]);n&&(console.error(n),alert("Failed to send private message."))}}function scrollToBottom(){messageList.scrollTop=messageList.scrollHeight}function escapeHtml(e){if(!e)return"";const t={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"};return e.replace(/[&<>"']/g,function(e){return t[e]})}chatInput.addEventListener("keypress",function(e){"Enter"===e.key&&sendMessage()})</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>Chat - litegames.fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #E0F7FA;
+            --card-bg: #ffffff;
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --chat-bubble-self: #4ECDC4;
+            --chat-bubble-other: #f1f1f1;
+            --selected-channel: #e3fdfb;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 90vh;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar structure */
+        .sidebar {
+            width: 250px;
+            background: #f8f9fa;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-family: 'Fredoka', sans-serif;
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .channel-section-title {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .channel-btn {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            width: 100%;
+            text-align: left;
+        }
+
+        .channel-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .channel-btn.active {
+            background: var(--selected-channel);
+            color: var(--secondary);
+            border-left: 4px solid var(--secondary);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .online-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            margin-left: auto;
+            /* Push to right or place next to avatar */
+            box-shadow: 0 0 5px #2ecc71;
+            display: none;
+            /* Hidden by default */
+        }
+
+        .channel-btn.online .online-dot {
+            display: block;
+        }
+
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            background-image: radial-gradient(#4ECDC4 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+        }
+
+        .message.self {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message-meta {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 5px;
+            padding: 0 5px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 2px solid #eee;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            border-color: var(--secondary);
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .back-btn {
+            margin-top: auto;
+            padding: 10px;
+            text-align: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        /* Admin Fire Effect */
+        @keyframes fireGlow {
+            0% {
+                box-shadow: 0 0 5px #ff0000, 0 0 10px #ff4500;
+                border-color: #ff4500;
+            }
+
+            50% {
+                box-shadow: 0 0 15px #ff0000, 0 0 20px #ff8c00;
+                border-color: #ff8c00;
+            }
+
+            100% {
+                box-shadow: 0 0 5px #ff0000, 0 0 10px #ff4500;
+                border-color: #ff4500;
+            }
+        }
+
+        .message-bubble.admin-fire {
+            animation: fireGlow 1.5s infinite alternate;
+            border: 2px solid #ff4500 !important;
+            background: #2a2a2a !important;
+            /* Dark bg to make fire pop */
+            color: #fff !important;
+            font-weight: bold;
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 0;
+        }
+
+        .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Modal for Disclaimer */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-family: 'Fredoka', sans-serif;
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-text {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .chat-container {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimerModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title">⚠️ Community Guidelines</h2>
+            <div class="modal-text">
+                <p>Welcome to LiteGames Chat!</p>
+                <ul style="text-align: left; margin: 15px 0; padding-left: 20px;">
+                    <li>Be respectful and kind to others.</li>
+                    <li>Global messages & Private chats are cleared every 24 hours.</li>
+                    <li>Private messages are end-to-end encrypted.</li>
+                </ul>
+                <p>By entering, you agree to these rules.</p>
+            </div>
+            <button class="modal-btn" onclick="acceptDisclaimer()">I Agree, Enter Chat</button>
+            <br><br>
+            <a href="index.html" style="color: #999; text-decoration: underline; font-size: 0.9rem;">Go Back</a>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>💬 Chat</h2>
+
+            <!-- Timer & Coins Location -->
+            <div id="custom-timer-location" style="margin-bottom: 20px; display:flex; justify-content:center;"></div>
+
+            <button class="channel-btn" onclick="switchChannel('broadcast')">
+                <span style="font-size: 1.2rem;">⚡📢</span> Dev Broadcast
+            </button>
+
+            <button class="channel-btn active" onclick="switchChannel('global')">
+                <span style="font-size: 1.2rem;">🌎</span> Global Chat
+            </button>
+
+            <div class="channel-section-title">Private Messages</div>
+            <div id="friendsListContainer">
+                <div style="text-align:center; color:#ccc; font-size:0.9rem;">Loading friends...</div>
+            </div>
+
+            <a href="index.html" class="back-btn">← Back to Games</a>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <h3 id="currentChatTitle">🌎 Global Chat</h3>
+                <span style="font-size: 0.8rem; color: #aaa;">Resets daily at 12:00 AM</span>
+            </div>
+
+            <div class="chat-messages" id="messageList">
+                <div style="text-align: center; color: #ccc; margin-top: 50px;">Loading messages...</div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="280">
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="global.js"></script>
+    <script>
+        // --- Configuration ---
+        const SECRET_KEY = "LITEGAMES_SECURE_CHAT"; // In prod, rely on SSL + more complex key management
+
+        // --- State ---
+        let currentUser = null;
+        let activeChannel = 'global'; // 'global' or friend's UUID
+        let activeFriendName = '';
+        let friendsCache = [];
+        let subscription = null; // Current realtime subscription
+
+        // --- Init ---
+        // Check Login immediately
+        const userStored = localStorage.getItem('user_name');
+        if (!userStored) window.location.href = 'login.html';
+
+        const messageList = document.getElementById('messageList');
+        const chatInput = document.getElementById('chatInput');
+        const friendsContainer = document.getElementById('friendsListContainer');
+
+        function acceptDisclaimer() {
+            document.getElementById('disclaimerModal').style.display = 'none';
+            initApp();
+        }
+
+        async function initApp() {
+            try {
+                // 1. Get User
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    alert("Session expired. Please login again.");
+                    window.location.href = 'login.html';
+                    return;
+                }
+                currentUser = user;
+
+                // 2. Fetch Friends for Sidebar
+                await fetchFriendsList();
+
+                // 3. Init Presence
+                initPresence();
+
+                // 4. Load Global Chat by default
+                switchChannel('global');
+
+            } catch (err) {
+                console.error("Init Error:", err);
+            }
+        }
+
+        // --- Encryption Helpers ---
+        function encryptMessage(text) {
+            return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+        }
+
+        function decryptMessage(ciphertext) {
+            try {
+                const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+                return bytes.toString(CryptoJS.enc.Utf8);
+            } catch (e) {
+                return "[Error decrypting]";
+            }
+        }
+
+        // --- View Logic ---
+        function getAvatar(username) {
+            const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            return {
+                emoji: emojis[Math.abs(hash) % emojis.length],
+                color: `hsl(${Math.abs(hash) % 360}, 70%, 85%)`,
+                borderColor: `hsl(${Math.abs(hash) % 360}, 70%, 40%)`
+            };
+        }
+
+        // --- Presence / Online Status ---
+        let onlineUsers = new Set();
+        let presenceChannel = null;
+
+        function initPresence() {
+            presenceChannel = supabase.channel('global_presence', {
+                config: {
+                    presence: {
+                        key: currentUser.id,
+                    },
+                },
+            });
+
+            presenceChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const newState = presenceChannel.presenceState();
+                    onlineUsers.clear();
+                    // State object: { "userId1": [ {user_id: "...", ...} ], ... }
+                    // Actually, keys are what we set in 'key' config.
+                    // The 'presenceState()' returns an object where keys are the 'presence key' (our user ID)
+                    // and values are arrays of presence objects.
+
+                    Object.keys(newState).forEach(id => {
+                        onlineUsers.add(id);
+                    });
+
+                    renderFriendsList(); // Re-render to show dots
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Track ourselves
+                        await presenceChannel.track({
+                            user_id: currentUser.id,
+                            online_at: new Date().toISOString(),
+                        });
+                    }
+                });
+        }
+
+        async function switchChannel(channelId, friendName = '') {
+            activeChannel = channelId;
+            activeFriendName = friendName;
+
+            // UI Update
+            document.querySelectorAll('.channel-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (channelId === 'global') {
+                document.querySelector('.channel-btn[onclick="switchChannel(\'global\')"]').classList.add('active');
+                document.getElementById('currentChatTitle').innerHTML = '🌎 Global Chat';
+                chatInput.disabled = false;
+                chatInput.placeholder = "Type a message...";
+            } else if (channelId === 'broadcast') {
+                document.querySelector('.channel-btn[onclick="switchChannel(\'broadcast\')"]').classList.add('active');
+                document.getElementById('currentChatTitle').innerHTML = '📢 Dev Broadcast (Admin Only)';
+                const myName = localStorage.getItem('user_name');
+                if (myName === ADMIN_USERNAME) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = "Broadcast a message...";
+                } else {
+                    chatInput.disabled = true;
+                    chatInput.placeholder = "Only GAMEDEV can post here.";
+                }
+            } else {
+                const friendBtn = document.getElementById(`friend-btn-${channelId}`);
+                if (friendBtn) friendBtn.classList.add('active');
+                const avatar = getAvatar(friendName);
+                if (avatar) document.getElementById('currentChatTitle').innerHTML = `${avatar.emoji} ${friendName}`;
+                chatInput.disabled = false;
+                chatInput.placeholder = "Type a message...";
+            }
+
+            // Load Messages
+            messageList.innerHTML = '<div style="text-align: center; color: #ccc; margin-top: 50px;">Loading...</div>';
+
+            // Clean up old subscription
+            if (subscription) await supabase.removeChannel(subscription);
+
+            if (channelId === 'global') {
+                loadGlobalMessages();
+                subscribeGlobal();
+            } else if (channelId === 'broadcast') {
+                loadBroadcastMessages();
+                subscribeBroadcast();
+            } else {
+                loadPrivateMessages(channelId);
+                subscribePrivate(channelId);
+            }
+        }
+
+        async function fetchFriendsList() {
+            // Simplified Fetch: Get all accepted requests involving me
+            // We use 'users_profile' join differently or just simple two-step if join fails
+
+            // Attempt 1: Get requests first
+            const { data: requests, error } = await supabase
+                .from('friend_requests')
+                .select('*')
+                .eq('status', 'accepted')
+                .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`);
+
+            if (error || !requests) {
+                console.error("Friends fetch error:", error);
+                friendsContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#aaa;">Error loading friends</div>';
+                return;
+            }
+
+            // Extract IDs of the OTHER person
+            const friendIds = requests.map(r => r.sender_id === currentUser.id ? r.receiver_id : r.sender_id);
+
+            if (friendIds.length === 0) {
+                renderFriendsList([]);
+                return;
+            }
+
+            // Fetch profiles for these IDs
+            const { data: profiles, error: profError } = await supabase
+                .from('users_profile')
+                .select('id, username')
+                .in('id', friendIds);
+
+            if (profError) {
+                console.error("Profile fetch error:", profError);
+                return;
+            }
+
+            friendsCache = profiles;
+            renderFriendsList();
+        }
+
+        function renderFriendsList() {
+            if (!friendsCache || friendsCache.length === 0) {
+                friendsContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#aaa; font-size:0.8rem;">No friends yet. Add some in the dashboard!</div>';
+                return;
+            }
+
+            let html = '';
+            friendsCache.forEach(f => {
+                const avatar = getAvatar(f.username);
+                const isOnline = onlineUsers.has(f.id);
+                const activeClass = isOnline ? 'online' : '';
+
+                html += `
+                    <button id="friend-btn-${f.id}" class="channel-btn ${activeClass}" onclick="switchChannel('${f.id}', '${f.username}')">
+                        <span style="font-size: 1.2rem;">${avatar.emoji}</span> ${f.username}
+                        <div class="online-dot"></div>
+                    </button>
+                `;
+            });
+            friendsContainer.innerHTML = html;
+        }
+
+        // --- Message Loading Logic ---
+
+        function getTodayFilter() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return today.toISOString();
+        }
+
+        async function loadGlobalMessages() {
+            const { data, error } = await supabase
+                .from('global_chat')
+                .select('*')
+                .gte('created_at', getTodayFilter())
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            renderMessageBlock(data, error, 'global');
+        }
+
+        const ADMIN_USERNAME = 'GAMEDEV';
+
+        async function loadBroadcastMessages() {
+            const { data, error } = await supabase
+                .from('dev_broadcast')
+                .select('*')
+                .order('created_at', { ascending: true }); // No date filter = permanent
+
+            renderMessageBlock(data, error, 'broadcast');
+        }
+
+        function subscribeBroadcast() {
+            subscription = supabase
+                .channel('dev_broadcast')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dev_broadcast' }, payload => {
+                    appendMessage(payload.new, 'broadcast');
+                })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'dev_broadcast' }, payload => {
+                    // Realtime delete update
+                    const el = document.getElementById(`msg-${payload.old.id}`);
+                    if (el) el.remove();
+                })
+                .subscribe();
+        }
+
+        // Keep Delete listener generic if possible, but 'global_chat' and 'private_chat' also need it?
+        // Let's rely on refresh or improve listeners later. For now, Broadcast is permanent so delete is important.
+        // I should probably add DELETE listeners to Global too if Admin deletes them.
+
+        async function deleteMessage(msgId, channelType) {
+            if (!confirm("Are you sure you want to delete this message?")) return;
+
+            let table = 'global_chat';
+            if (channelType === 'private') table = 'private_chat';
+            if (channelType === 'broadcast') table = 'dev_broadcast';
+
+            const { error } = await supabase.from(table).delete().eq('id', msgId);
+
+            if (error) {
+                console.error("Delete failed:", error);
+                alert("Failed to delete: " + error.message);
+            } else {
+                // Remove from UI immediately for responsiveness
+                const el = document.getElementById(`msg-${msgId}`);
+                if (el) el.remove();
+            }
+        }
+
+        async function loadPrivateMessages(friendId) {
+            // Need to fetch messages where (sender=me AND receiver=friend) OR (sender=friend AND receiver=me)
+            // Supabase 'or' filter syntax: .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUser.id})`)
+
+            const { data, error } = await supabase
+                .from('private_chat')
+                .select('*')
+                .gte('created_at', getTodayFilter())
+                .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUser.id})`)
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            // Decrypt required for private
+            if (data) {
+                data.forEach(msg => {
+                    msg.message = decryptMessage(msg.message); // Decrypt in place
+                });
+            }
+
+            renderMessageBlock(data, error, 'private');
+        }
+
+        function renderMessageBlock(data, error, type) {
+            if (error) {
+                console.error("Load Error:", error);
+                messageList.innerHTML = '<div style="text-align: center; color: red;">Error loading messages</div>';
+                return;
+            }
+
+            messageList.innerHTML = '';
+            if (!data || data.length === 0) {
+                messageList.innerHTML = '<div style="text-align: center; color: #ccc; margin-top: 20px;">No messages today. Say hi!</div>';
+            } else {
+                data.forEach(msg => appendMessage(msg, type));
+            }
+            scrollToBottom();
+        }
+
+        // --- Subscription Logic ---
+
+        function subscribeGlobal() {
+            subscription = supabase
+                .channel('global_chat')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_chat' }, payload => {
+                    appendMessage(payload.new, 'global');
+                })
+                .subscribe();
+        }
+
+        function subscribePrivate(friendId) {
+            // Subscribe to ALL inserts on private_chat to ensure we catch messages
+            // Then filter inside the callback
+
+            subscription = supabase
+                .channel('private_chat_room')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'private_chat' }, payload => {
+                    const msg = payload.new;
+
+                    // Logic: Does this message belong to the currently active conversation?
+                    // Conversation is between [currentUser] and [friendId]
+                    // So message must be (Sender=Me & Receiver=Friend) OR (Sender=Friend & Receiver=Me)
+
+                    const matchesConversation =
+                        (msg.sender_id === friendId && msg.receiver_id === currentUser.id) ||
+                        (msg.sender_id === currentUser.id && msg.receiver_id === friendId);
+
+                    if (matchesConversation) {
+                        // Decrypt before appending
+                        msg.message = decryptMessage(msg.message);
+                        appendMessage(msg, 'private');
+                    }
+                })
+                .subscribe();
+        }
+
+
+        // --- Display Logic ---
+
+        function appendMessage(msg, type) {
+            if (messageList.innerHTML.includes('No messages')) messageList.innerHTML = '';
+
+            const isSelf = msg.user_id === currentUser.id || msg.sender_id === currentUser.id;
+            // For private chat, 'username' might not be in the row (only IDs). 
+            // If Self, we know it's "You". If Other, it's 'activeFriendName' (in Private context).
+
+            let displayUsername = msg.username; // Default for global
+            if (type === 'private') {
+                displayUsername = isSelf ? 'You' : activeFriendName;
+            }
+            if (type === 'broadcast') {
+                displayUsername = msg.username || 'GAMEDEV';
+            }
+
+            const div = document.createElement('div');
+            div.id = `msg-${msg.id}`; // Add ID for deletion
+            div.className = `message ${isSelf ? 'self' : 'other'}`;
+
+            const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const avatar = getAvatar(displayUsername || 'Unknown');
+
+            const isAdminMsg = (displayUsername === ADMIN_USERNAME);
+            // Admin Fire Style
+            const adminClass = isAdminMsg ? 'admin-fire' : '';
+
+            // Delete Capability?
+            // If I am Admin, I can delete ANY message.
+            const iamAdmin = (localStorage.getItem('user_name') === ADMIN_USERNAME);
+            let deleteBtnHtml = '';
+            if (iamAdmin) {
+                deleteBtnHtml = `<button class="delete-btn" onclick="deleteMessage('${msg.id}', '${type}')" title="Delete Message">🗑️</button>`;
+            }
+
+            let bubbleStyle = isSelf
+                ? `background: var(--chat-bubble-self); color: white;`
+                : `background: ${avatar.color}; color: #333; border: 2px solid ${avatar.borderColor};`;
+
+            // Override style for Admin Fire if set
+            if (isAdminMsg) bubbleStyle = ''; // Let CSS class handle it
+
+            // HTML Structure
+            let headerHtml = '';
+            if (!isSelf || type === 'broadcast') {
+                // Even if self, show name in broadcast for authority
+                headerHtml = `<div class="message-meta" style="margin-bottom:2px; display:flex; align-items:center; gap:5px; justify-content: flex-start">
+                   <span style="font-size:1.2rem;">${avatar.emoji}</span> <b>${escapeHtml(displayUsername)}</b> 
+                   ${deleteBtnHtml}
+                </div>`;
+            } else {
+                // If self in normal chat, maybe put delete button near bubble or time?
+                // Let's put it in the "time" meta for self, or header if we had one.
+                // Simplified: Put it after time? Or force a header?
+                // Minimalist: Put it in the timestamp div for self messages.
+            }
+
+            // For Self messages, the delete button location is tricky.
+            // Let's append delete btn to message bubble wrapper or meta.
+            let selfDelete = '';
+            if (iamAdmin && isSelf && type !== 'broadcast') {
+                selfDelete = deleteBtnHtml;
+            }
+
+            div.innerHTML = `
+                ${headerHtml}
+                <div class="message-bubble ${adminClass}" style="${bubbleStyle}">
+                    ${escapeHtml(msg.message)}
+                </div>
+                <div class="message-meta" style="text-align: ${isSelf ? 'right' : 'left'}">
+                    ${time} ${selfDelete}
+                </div>
+            `;
+
+            messageList.appendChild(div);
+            scrollToBottom();
+
+            // Extra: If I am admin and it's other's message, I put delete button in header.
+            // If I am admin and it's MY message, I put it in footer (selfDelete).
+            // Logic handled above.
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+
+            const username = localStorage.getItem('user_name') || 'Unknown';
+
+            if (activeChannel === 'global') {
+                const { error } = await supabase.from('global_chat').insert([{
+                    user_id: currentUser.id,
+                    username: username,
+                    message: text
+                }]);
+                if (error) alert("Failed: " + error.message);
+
+            } else if (activeChannel === 'broadcast') {
+                // Broadcast Send
+                if (username !== ADMIN_USERNAME) {
+                    alert("Only GAMEDEV can broadcast.");
+                    return;
+                }
+                const { error } = await supabase.from('dev_broadcast').insert([{
+                    user_id: currentUser.id, // For reference
+                    username: ADMIN_USERNAME,
+                    message: text
+                }]);
+                if (error) alert("Broadcast Failed: " + error.message);
+
+            } else {
+                // Private Send (Encrypted)
+                const encryptedText = encryptMessage(text);
+                const { error } = await supabase.from('private_chat').insert([{
+                    sender_id: currentUser.id,
+                    receiver_id: activeChannel, // activeChannel is friend's UUID
+                    message: encryptedText
+                }]);
+                if (error) {
+                    console.error(error);
+                    alert("Failed to send private message.");
+                }
+            }
+        }
+
+        // Utils
+        function scrollToBottom() {
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
+
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+    </script>
+</body>
+
+</html>
