@@ -749,8 +749,13 @@ const TimeManager = {
         // Try to find header actions container
 
         // Try to find header actions container
+        const customLoc = document.getElementById('custom-timer-location');
         const zoomBtn = document.querySelector('.btn-zoom');
-        if (zoomBtn && zoomBtn.parentElement) {
+
+        if (customLoc) {
+            timerContainer.className = 'tm-inline-timer';
+            customLoc.appendChild(timerContainer);
+        } else if (zoomBtn && zoomBtn.parentElement) {
             timerContainer.className = 'tm-inline-timer';
             // Insert before the first zoom button
             zoomBtn.parentElement.insertBefore(timerContainer, zoomBtn);
