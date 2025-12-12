@@ -103,12 +103,20 @@ const AuthManager = {
                 }
 
                 // Success
+                this.clearGameData();
                 this.setLocalSession(username, authData.session);
                 return { success: true };
             }
         } catch (error) {
             return { success: false, message: error.message };
         }
+    },
+
+    // Helper to clear local game data (Guest data) so it doesn't overwrite Server data on login
+    clearGameData() {
+        const keys = ['tm_remaining_seconds', 'tm_last_reset_date', 'tm_pending_sync',
+            'gm_gold_coins', 'gm_daily_earned', 'gm_pending_sync'];
+        keys.forEach(k => localStorage.removeItem(k));
     },
 
     // Sign In
@@ -147,6 +155,9 @@ const AuthManager = {
                     .single();
                 if (profile) username = profile.username;
             }
+
+            // CRITICAL: Clear Guest data so we PULL from server instead of PUSHING guest data
+            this.clearGameData();
 
             this.setLocalSession(username, data.session);
             return { success: true };
