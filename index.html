@@ -601,6 +601,70 @@
             box-shadow: 0 3px 0 #d64545;
         }
 
+        /* Device Modal Responsive Styles */
+        .device-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f2f6;
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 600px) {
+            .device-modal {
+                padding: 1.5rem 1rem;
+                width: 95%;
+                max-width: 95%;
+            }
+
+            .device-modal h2 {
+                font-size: 1.8rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .device-modal p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            /* Responsive Header inside Modal */
+            .device-modal-header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            #modal-auth-container {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            /* Adjust Grid for Mobile: fit 3 icons side-by-side if possible, or wrap */
+            .device-options {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .device-option {
+                padding: 10px;
+            }
+
+            .device-icon {
+                font-size: 2rem;
+                margin-bottom: 5px;
+            }
+
+            .device-label {
+                font-size: 0.8rem;
+            }
+        }
+
         /* Mobile Mode Overrides */
         body.mode-mobile .hero h1 {
             font-size: 3rem;
@@ -1346,8 +1410,7 @@
         <div class="device-modal">
 
             <!-- Dashboard Header inside Modal -->
-            <div class="device-modal-header"
-                style="display: flex; justify-content: space-between; align-items: center; background: #f1f2f6; padding: 10px 20px; border-radius: 15px; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+            <div class="device-modal-header">
 
                 <!-- Left: Auth -->
                 <div id="modal-auth-container">
