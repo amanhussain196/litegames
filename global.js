@@ -153,28 +153,23 @@ const GoldManager = {
     },
 
     loadFromProfile: function (profileData) {
-        // Robust Sync: Check if we have unsynced local changes
-        const pendingSync = localStorage.getItem('gm_pending_sync') === 'true';
-
-        if (pendingSync) {
-            console.log("Gold Manager: Found unsynced local changes. Prioritizing local data.");
-            const saved = localStorage.getItem('gm_gold_coins');
-            const savedDaily = localStorage.getItem('gm_daily_earned');
-            this.coins = saved ? parseInt(saved) : 0;
-            this.dailyEarned = savedDaily ? parseInt(savedDaily) : 0;
-            this.pendingSync = true; // Force sync next cycle
-        } else if (profileData) {
+        // Server Authority: Always trust profileData if available
+        if (profileData) {
             this.coins = profileData.gold_coins != null ? parseInt(profileData.gold_coins) : 0;
             this.dailyEarned = profileData.daily_coins_earned != null ? parseInt(profileData.daily_coins_earned) : 0;
+
+            // Clear any stale local flags since server is truth
+            this.pendingSync = false;
+            localStorage.removeItem('gm_pending_sync');
+            this.saveTxLocal(); // Update local to match server
         } else {
-            // Try local storage
+            // Fallback to local storage if DB fetch failed or no profile
             const saved = localStorage.getItem('gm_gold_coins');
             const savedDaily = localStorage.getItem('gm_daily_earned');
             this.coins = saved ? parseInt(saved) : 0;
             this.dailyEarned = savedDaily ? parseInt(savedDaily) : 0;
         }
         this.updateUIDisplay();
-        this.saveTxLocal(); // Ensure consistency
     },
 
     markSynced: function () {
@@ -241,10 +236,15 @@ const GoldManager = {
         if (!this.coinTextEl) this.coinTextEl = document.getElementById('tm-gold-text');
         const wrapper = document.getElementById('tm-gold-wrapper');
 
+        // Update Modal Elements
+        const modalGold = document.querySelector('.modal-gold-text');
+        const modalGoldWrapper = document.querySelector('.modal-gold-wrapper');
+
         if (localStorage.getItem('is_logged_in') === 'true') {
-            if (this.coinTextEl) {
-                this.coinTextEl.textContent = this.coins.toLocaleString();
-            }
+            const displayValue = this.coins.toLocaleString();
+            if (this.coinTextEl) this.coinTextEl.textContent = displayValue;
+            if (modalGold) modalGold.textContent = displayValue;
+
             if (wrapper) {
                 wrapper.title = `Daily limit: ${this.dailyEarned}/${this.DAILY_CAP}`;
                 wrapper.style.cursor = 'default';
@@ -261,6 +261,13 @@ const GoldManager = {
                 wrapper.style.alignItems = 'center';
                 wrapper.onclick = () => window.location.href = 'login.html';
                 wrapper.title = "Login required to earn gold coins";
+            }
+            if (modalGoldWrapper) {
+                modalGoldWrapper.innerHTML = `Login to earn gold`;
+                modalGoldWrapper.style.fontSize = '0.8rem';
+                modalGoldWrapper.style.textDecoration = 'underline';
+                modalGoldWrapper.style.cursor = 'pointer';
+                modalGoldWrapper.onclick = () => window.location.href = 'login.html';
             }
         }
     },
@@ -338,8 +345,18 @@ const TimeManager = {
             GoldManager.loadFromProfile(null);
         }
 
-        // Start the countdown timer (visuals)
-        this.startTimer();
+        // AUTO-START LOGIC:
+        // If the user has ALREADY selected a device mode in the past (it's saved in localStorage),
+        // we assume they are already "in" the app, so we start the timer immediately.
+        // If not (first visit), the timer waits for 'setDeviceMode' to call startSession().
+        if (localStorage.getItem('deviceMode')) {
+            console.log("Device mode found (" + localStorage.getItem('deviceMode') + "), auto-starting session.");
+            this.startSession();
+        } else {
+            console.log("No device mode selected yet. Waiting for user input.");
+            // Show static time
+            this.updateUIDisplay();
+        }
 
         // Always save to local storage as a backup/cache
         this.saveInterval = setInterval(() => this.saveTimeLocal(), 5000);
@@ -356,22 +373,33 @@ const TimeManager = {
 
         window.addEventListener('beforeunload', () => {
             this.saveTimeLocal();
-            if (this.user) {
-                this.saveOnExit();
-            }
+            if (this.user) this.saveOnExit();
         });
 
-        // Handle cross-tab updates (e.g. from Shop coupon redemption)
         window.addEventListener('storage', (e) => {
             if (e.key === 'tm_remaining_seconds' && e.newValue) {
                 const newSecs = parseInt(e.newValue);
                 if (!isNaN(newSecs) && newSecs !== this.remainingSeconds) {
-                    console.log("Time updated from another tab/script:", newSecs);
                     this.remainingSeconds = newSecs;
                     this.updateUIDisplay();
                 }
             }
         });
+
+        // Safety: ensure UI is populated even if still fetching
+        setTimeout(() => this.updateUIDisplay(), 500);
+    },
+
+    // New Method called by setDeviceMode
+    startSession: function () {
+        console.log("Starting Session...");
+        // Start the ticker
+        this.startTimer();
+
+        // Immediate check: If time is already zero, force the ad/block NOW
+        if (this.remainingSeconds <= 0) {
+            this.handleTimeUp();
+        }
     },
 
     saveOnExit: function () {
@@ -430,12 +458,20 @@ const TimeManager = {
         const savedTime = localStorage.getItem('tm_remaining_seconds');
 
         if (lastReset !== today) {
+            console.log("Local: New day detected. Resetting time and gold limits.");
             this.remainingSeconds = this.DAILY_LIMIT;
+            GoldManager.resetDaily(); // Reset daily gold cap
             localStorage.setItem('tm_last_reset_date', today);
             this.saveTimeLocal();
         } else {
-            this.remainingSeconds = savedTime ? parseInt(savedTime) : this.DAILY_LIMIT;
+            let val = parseInt(savedTime);
+            if (isNaN(val)) {
+                console.warn("Found invalid time in storage, resetting.");
+                val = this.DAILY_LIMIT;
+            }
+            this.remainingSeconds = val;
         }
+        this.updateUIDisplay();
     },
 
     saveTimeLocal: function () {
@@ -451,7 +487,6 @@ const TimeManager = {
             .from('users_profile')
             .select('remaining_seconds, last_reset_date, gold_coins, daily_coins_earned')
             .eq('id', this.user.id)
-
             .single();
 
         if (data) {
@@ -477,60 +512,42 @@ const TimeManager = {
                 this.remainingSeconds = data.remaining_seconds != null ? data.remaining_seconds : this.DAILY_LIMIT;
             }
 
-            // Update local storage to match server (trust server, unless local forced override)
-            if (!GoldManager.pendingSync) {
-                localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
-                localStorage.setItem('tm_last_reset_date', today);
-            } else {
-                // If GoldManager forced a local override, it implies our session ended abnormally.
-                // We should trust LOCAL time as well, as it likely progressed with the coins.
-                const localTime = localStorage.getItem('tm_remaining_seconds');
-                if (localTime) {
-                    this.remainingSeconds = parseInt(localTime);
-                    console.log("Restored local time: " + this.remainingSeconds);
-                }
+            // Always trust server data on pure fetch
+            localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+            localStorage.setItem('tm_last_reset_date', today);
+            this.pendingSync = false;
 
-                console.log("Syncing local override up to server...");
-                this.syncTimeRemote(true);
-            }
         } else {
             // Profile might not exist yet, rely on local for now
             this.checkDailyResetLocal();
             GoldManager.loadFromProfile(null);
         }
+        this.updateUIDisplay();
     },
 
     syncTimeRemote: async function (force = false) {
+        // ... (existing implementation) ...
         if (!this.user || !this.sb) return;
         if (!this.pendingSync && !GoldManager.pendingSync && !force) return;
 
         const today = new Date().toDateString();
-
-        // Combine payloads
         const updates = {
             remaining_seconds: this.remainingSeconds,
             last_reset_date: today,
-            // Only add gold if it changed or verifying
             ...GoldManager.getPayload()
         };
-
 
         const { error, count } = await this.sb
             .from('users_profile')
             .update(updates)
             .eq('id', this.user.id)
-            .select('id', { count: 'exact' }); // Get count to check if row existed
+            .select('id', { count: 'exact' });
 
         if (error) {
-            console.error("Error syncing time (Supabase Code " + error.code + "):", error.message);
-        } else if (count === 0) {
-            // This is the critical case: No row found to update
-            console.error("Sync failed: No profile row found for user " + this.user.id);
-            // Optional: Try to recover? (requires username)
+            // error handle
         } else {
             this.pendingSync = false;
             GoldManager.markSynced();
-            // console.log("Time synced to server.");
         }
     },
 
@@ -543,32 +560,47 @@ const TimeManager = {
     startTimer: function () {
         if (this.timerInterval) clearInterval(this.timerInterval);
 
+        this.updateUIDisplay(); // Initial update on start
+        console.log("Timer started. Remaining: " + this.remainingSeconds);
+
         this.timerInterval = setInterval(() => {
+            // Safety Check
+            if (isNaN(this.remainingSeconds)) {
+                this.remainingSeconds = this.DAILY_LIMIT;
+            }
+
+            // Midnight Check: Detect day change while playing
+            const currentToday = new Date().toDateString();
+            const lastKnownDate = localStorage.getItem('tm_last_reset_date');
+
+            if (lastKnownDate && lastKnownDate !== currentToday) {
+                console.log("Midnight detected! Resetting daily limits.");
+                this.remainingSeconds = this.DAILY_LIMIT;
+                GoldManager.resetDaily();
+                localStorage.setItem('tm_last_reset_date', currentToday);
+                this.saveTimeLocal();
+                this.updateUIDisplay();
+                if (this.user) this.syncTimeRemote(true);
+            }
+
             if (this.remainingSeconds > 0) {
                 this.remainingSeconds--;
+                // console.log("Tick: " + this.remainingSeconds); // Debug
                 this.updateUIDisplay();
-                this.pendingSync = true; // Mark dirty
-
-                // Passive Income for Gold - Disabled
-                // this.passiveTicker++;
-                // if (this.passiveTicker >= 60) {
-                //     GoldManager.addCoins(GoldManager.COINS_PER_MINUTE);
-                //     this.passiveTicker = 0;
-                // }
+                this.pendingSync = true;
 
                 if (this.remainingSeconds <= 0) {
                     this.handleTimeUp();
                 }
             } else {
+                // If it starts at 0 or hits 0
+                this.remainingSeconds = 0; // clamp
                 this.handleTimeUp();
             }
         }, 1000);
-
-        this.updateUIDisplay();
     },
 
     saveTime: function () {
-        // Legacy wrapper if called externally
         this.saveTimeLocal();
     },
 
@@ -817,31 +849,34 @@ const TimeManager = {
         this.remainingSeconds = 0;
         this.saveTime();
         this.updateUIDisplay();
-        document.getElementById('tm-block-modal').style.display = 'flex';
+        // Show Blocking Modal
+        const blockModal = document.getElementById('tm-block-modal');
+        if (blockModal.style.display !== 'flex') {
+            blockModal.style.display = 'flex';
+        }
+
+        // Also update modal prompt if needed?
+        // Actually, if time is up, the blocking modal covers everything anyway.
     },
 
     playAd: function () {
-        const adModal = document.getElementById('tm-ad-modal');
-        const blockModal = document.getElementById('tm-block-modal');
-        const timerSpan = document.getElementById('tm-ad-timer');
-        const progressFill = document.getElementById('tm-ad-progress-fill');
-
-        blockModal.style.display = 'none'; // Hide block modal if open
-        adModal.style.display = 'flex';
+        const modal = document.getElementById('tm-ad-modal');
+        modal.style.display = 'flex';
 
         let timeLeft = this.AD_DURATION;
-        timerSpan.textContent = timeLeft;
-        progressFill.style.width = '0%';
-        progressFill.style.transition = `width ${this.AD_DURATION}s linear`;
+        const timerText = document.getElementById('tm-ad-timer');
+        const fill = document.getElementById('tm-ad-progress-fill');
 
-        // Force reflow
-        progressFill.offsetHeight;
-        progressFill.style.width = '100%';
+        fill.style.width = '0%';
+        timerText.textContent = timeLeft;
+
+        // Force Reflow
+        void fill.offsetWidth;
+        fill.style.width = '100%';
 
         const interval = setInterval(() => {
             timeLeft--;
-            timerSpan.textContent = timeLeft;
-
+            timerText.textContent = timeLeft;
             if (timeLeft <= 0) {
                 clearInterval(interval);
                 this.finishAd();

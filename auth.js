@@ -164,6 +164,50 @@ const AuthManager = {
         }
     },
 
+    // Inactivity Tracking
+    inactivityTimeout: null,
+    inactivityTrackingInitialized: false,
+    INACTIVITY_LIMIT: 3 * 60 * 1000, // 3 minutes
+
+    startInactivityTimer() {
+        if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
+
+        // Robust login check: check flag OR username presence
+        const isLoggedIn = localStorage.getItem('is_logged_in') === 'true' || !!localStorage.getItem('user_name');
+
+        if (isLoggedIn) {
+            this.inactivityTimeout = setTimeout(() => {
+                console.log("User inactive for 3m. Saving and logging out...");
+                this.logout();
+            }, this.INACTIVITY_LIMIT);
+        }
+    },
+
+    resetInactivityTimer() {
+        this.startInactivityTimer();
+    },
+
+    initInactivityTracking() {
+        if (this.inactivityTrackingInitialized) return;
+        this.inactivityTrackingInitialized = true;
+
+        const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'click', 'keydown', 'scroll'];
+
+        let processing = false;
+        const reset = () => {
+            if (processing) return;
+            processing = true;
+            this.resetInactivityTimer();
+            setTimeout(() => { processing = false; }, 200);
+        };
+
+        events.forEach(event => {
+            document.addEventListener(event, reset, true);
+        });
+
+        this.startInactivityTimer();
+    },
+
     async logout() {
         // Attempt to sync time before logging out
         if (typeof TimeManager !== 'undefined' && TimeManager.user) {
@@ -178,7 +222,7 @@ const AuthManager = {
             }
         }
 
-        await supabase.auth.signOut();
+        if (supabase) await supabase.auth.signOut();
         localStorage.removeItem('user_name');
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('supabase.auth.token');
@@ -190,3 +234,16 @@ const AuthManager = {
         window.location.reload();
     }
 };
+
+// Initialize on load or immediately if ready
+const initAuth = () => {
+    if (typeof AuthManager !== 'undefined') {
+        AuthManager.initInactivityTracking();
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+    initAuth();
+}
