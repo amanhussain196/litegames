@@ -1,1 +1,238 @@
-﻿<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=1280,initial-scale=1"><title>Shop - litegames.fun</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>:root{--bg-color:#E0F7FA;--card-bg:#ffffff;--primary:#FF6B6B;--secondary:#4ECDC4;--text-main:#2D3436;--text-muted:#636e72}body{font-family:Nunito,sans-serif;background-color:var(--bg-color);color:var(--text-main);display:flex;justify-content:center;align-items:center;min-height:100vh;text-align:center;padding:2rem}h1{font-family:Fredoka,sans-serif;color:var(--primary);font-size:3rem;margin-bottom:1rem}p{font-size:1.5rem;color:var(--text-muted);margin-bottom:2rem}a{display:inline-block;padding:1rem 2rem;background:var(--secondary);color:#fff;text-decoration:none;border-radius:50px;font-weight:700;box-shadow:0 4px 0 #3aa8a0;transition:transform .2s}a:hover{transform:translateY(-2px)}</style></head><body><div class="shop-container"><h1>Available Merch</h1><p>Our awesome merch is coming soon! Stay tuned.</p><div class="coupon-section" style="margin-top:50px;background:#fff;padding:30px;border-radius:20px;box-shadow:0 10px 20px rgba(0,0,0,.1);max-width:500px;margin-left:auto;margin-right:auto"><h2 style="color:var(--secondary);margin-bottom:20px">Redeem Coupon</h2><div style="display:flex;gap:10px;flex-direction:column;align-items:center"><input type="text" id="couponInput" placeholder="Enter coupon code" style="padding:15px;border-radius:10px;border:2px solid #eee;width:100%;font-size:1.1rem;text-align:center"> <button onclick="redeemCoupon()" style="padding:15px 40px;background:var(--primary);color:#fff;border:none;border-radius:50px;font-weight:700;cursor:pointer;font-size:1.1rem;box-shadow:0 4px 0 #d64545">Redeem</button></div><p id="redeemMessage" style="margin-top:15px;font-size:1rem"></p></div><br><br><a href="index.html">Back to Games</a></div><script src="auth.js"></script><script src="global.js"></script><script>async function redeemCoupon(){const e=document.getElementById("redeemMessage");e.textContent="";if(!("true"===localStorage.getItem("is_logged_in")))return e.textContent="❌ You must be logged in to redeem coupons.",void(e.style.color="var(--primary)");const t=document.getElementById("couponInput").value.trim();if(!t)return e.textContent="Please enter a code.",void(e.style.color="var(--text-muted)");e.textContent="Checking coupon...",e.style.color="var(--text-muted)";try{const{data:{user:o}}=await supabase.auth.getUser();if(!o)return e.textContent="❌ Authentication error. Please log in again.",void(e.style.color="var(--primary)");const{data:r,error:n}=await supabase.from("coupons").select("*").eq("code",t).single();if(n||!r)return e.textContent="❌ Invalid coupon code.",void(e.style.color="var(--primary)");if(r.max_uses>0){const{count:t,error:o}=await supabase.from("coupon_redemptions").select("*",{count:"exact",head:!0}).eq("coupon_id",r.id);if(t>=r.max_uses)return e.textContent="❌ This coupon has reached its redemption limit.",void(e.style.color="var(--primary)")}const{data:s,error:a}=await supabase.from("coupon_redemptions").select("id").eq("coupon_id",r.id).eq("user_id",o.id).single();if(s)return e.textContent="❌ You have already redeemed this coupon.",void(e.style.color="var(--primary)");const{error:i}=await supabase.from("coupon_redemptions").insert([{coupon_id:r.id,user_id:o.id}]);if(i)throw i;if("ADD500"===r.code){const e=3e4,{data:t}=await supabase.from("users_profile").select("remaining_seconds").eq("id",o.id).single();const r=(t&&null!==t.remaining_seconds?parseInt(t.remaining_seconds):parseInt(localStorage.getItem("tm_remaining_seconds")||"0"))+e,{error:n}=await supabase.from("users_profile").update({remaining_seconds:r}).eq("id",o.id);n&&console.error("Error syncing time:",n),localStorage.setItem("tm_remaining_seconds",r)}let c="";if(r.max_uses>0){const{count:e}=await supabase.from("coupon_redemptions").select("id",{count:"exact",head:!0}).eq("coupon_id",r.id);c=` (${r.max_uses-e} left)`}e.innerHTML=`✅ <b>Success!</b> ${r.description}${c}`,e.style.color="green",document.getElementById("couponInput").value=""}catch(t){console.error("Redemption error:",t),e.textContent="❌ An error occurred. Please try again.",e.style.color="var(--primary)"}}</script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>Shop - litegames.fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-color: #E0F7FA;
+            --card-bg: #ffffff;
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-family: 'Fredoka', sans-serif;
+            color: var(--primary);
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        a {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--secondary);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #3aa8a0;
+            transition: transform 0.2s;
+        }
+
+        a:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="shop-container">
+        <h1>Available Merch</h1>
+        <p>Our awesome merch is coming soon! Stay tuned.</p>
+
+        <div class="coupon-section"
+            style="margin-top: 50px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); max-width: 500px; margin-left: auto; margin-right: auto;">
+            <h2 style="color: var(--secondary); margin-bottom: 20px;">Redeem Coupon</h2>
+            <div style="display: flex; gap: 10px; flex-direction: column; align-items: center;">
+                <input type="text" id="couponInput" placeholder="Enter coupon code"
+                    style="padding: 15px; border-radius: 10px; border: 2px solid #eee; width: 100%; font-size: 1.1rem; text-align: center;">
+                <button onclick="redeemCoupon()"
+                    style="padding: 15px 40px; background: var(--primary); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 0 #d64545;">Redeem</button>
+            </div>
+            <p id="redeemMessage" style="margin-top: 15px; font-size: 1rem;"></p>
+        </div>
+
+        <br><br>
+        <a href="index.html">Back to Games</a>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="global.js?v=11"></script>
+    <script>
+        async function redeemCoupon() {
+            const messageEl = document.getElementById('redeemMessage');
+            messageEl.textContent = ''; // Clear previous messages
+
+            // 1. Check Login Status
+            const isLoggedIn = localStorage.getItem('is_logged_in') === 'true';
+            if (!isLoggedIn) {
+                messageEl.textContent = "❌ You must be logged in to redeem coupons.";
+                messageEl.style.color = "var(--primary)";
+                return;
+            }
+
+            const code = document.getElementById('couponInput').value.trim();
+            if (!code) {
+                messageEl.textContent = "Please enter a code.";
+                messageEl.style.color = "var(--text-muted)";
+                return;
+            }
+
+            messageEl.textContent = "Checking coupon...";
+            messageEl.style.color = "var(--text-muted)";
+
+            try {
+                // 2. Get User ID
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    messageEl.textContent = "❌ Authentication error. Please log in again.";
+                    messageEl.style.color = "var(--primary)";
+                    return;
+                }
+
+                // 3. Fetch Coupon Details
+                const { data: coupon, error: couponError } = await supabase
+                    .from('coupons')
+                    .select('*')
+                    .eq('code', code)
+                    .single();
+
+                if (couponError || !coupon) {
+                    messageEl.textContent = "❌ Invalid coupon code.";
+                    messageEl.style.color = "var(--primary)";
+                    return;
+                }
+
+                // 4. Check Max Uses (if not infinite)
+                if (coupon.max_uses > 0) {
+                    const { count, error: countError } = await supabase
+                        .from('coupon_redemptions')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('coupon_id', coupon.id);
+
+                    if (count >= coupon.max_uses) {
+                        messageEl.textContent = "❌ This coupon has reached its redemption limit.";
+                        messageEl.style.color = "var(--primary)";
+                        return;
+                    }
+                }
+
+                // 5. Check redundancy (Already redeemed by user?)
+                const { data: redemption, error: redemptionError } = await supabase
+                    .from('coupon_redemptions')
+                    .select('id')
+                    .eq('coupon_id', coupon.id)
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (redemption) {
+                    messageEl.textContent = "❌ You have already redeemed this coupon.";
+                    messageEl.style.color = "var(--primary)";
+                    return;
+                }
+
+                // 6. Redeem! (Insert record)
+                const { error: insertError } = await supabase
+                    .from('coupon_redemptions')
+                    .insert([
+                        { coupon_id: coupon.id, user_id: user.id }
+                    ]);
+
+                if (insertError) {
+                    throw insertError;
+                }
+
+                // Special handling for Minutes Coupon
+                if (coupon.code === 'ADD500') {
+                    const DAILY_LIMIT = 300;
+                    const ADDED_SECONDS = 500 * 60;
+
+                    // Fetch current server time to be accurate
+                    const { data: profile } = await supabase
+                        .from('users_profile')
+                        .select('remaining_seconds')
+                        .eq('id', user.id)
+                        .single();
+
+                    let currentSeconds = profile && profile.remaining_seconds !== null
+                        ? parseInt(profile.remaining_seconds)
+                        : parseInt(localStorage.getItem('tm_remaining_seconds') || '0');
+
+                    const newTotal = currentSeconds + ADDED_SECONDS;
+
+                    // Update Supabase
+                    const { error: updateError } = await supabase
+                        .from('users_profile')
+                        .update({ remaining_seconds: newTotal })
+                        .eq('id', user.id);
+
+                    if (updateError) console.error("Error syncing time:", updateError);
+
+                    // Update LocalStorage for immediate feedback if they switch tabs/pages
+                    localStorage.setItem('tm_remaining_seconds', newTotal);
+                }
+
+                // 7. Success!
+                let remainingMsg = "";
+                if (coupon.max_uses > 0) {
+                    // We already fetched 'count' in step 4, but it's scoped. 
+                    // Let's rely on the DB or just re-calculate for display if needed, 
+                    // but simpler is to trust the logic: we passed the check.
+                    // To be precise, let's fetch the new count or just pass the info if we have it?
+                    // We can't access 'count' here because of block scoping (const).
+                    // So let's count again for the message? Or just move 'count' declaration up.
+                    // Moving declaration is invasive. I'll just do a quick count since UX speed allows it.
+                    const { count: newCount } = await supabase
+                        .from('coupon_redemptions')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('coupon_id', coupon.id);
+
+                    const left = coupon.max_uses - newCount;
+                    remainingMsg = ` (${left} left)`;
+                }
+
+                messageEl.innerHTML = `✅ <b>Success!</b> ${coupon.description}${remainingMsg}`;
+                messageEl.style.color = "green";
+
+                // Optional: Clear input
+                document.getElementById('couponInput').value = '';
+
+            } catch (err) {
+                console.error("Redemption error:", err);
+                messageEl.textContent = "❌ An error occurred. Please try again.";
+                messageEl.style.color = "var(--primary)";
+            }
+        }
+    </script>
+</body>
+
+</html>

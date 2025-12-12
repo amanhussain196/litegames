@@ -1,1 +1,1206 @@
-<!DOCTYPE html><html lang="en"><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Super Snake | Man Games</title><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet"><style>:root{--primary:#FF6B6B;--secondary:#4ECDC4;--accent:#FFE66D;--dark:#2D3436;--light:#F7F9F9;--snake-head:#00b894;--snake-body:#55efc4;--food:#ff7675;--wall:#636e72;--glass:rgba(255, 255, 255, 0.25);--glass-border:rgba(255, 255, 255, 0.5);--shadow:0 8px 32px 0 rgba(31, 38, 135, 0.37)}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Fredoka,sans-serif;background:linear-gradient(135deg,#74b9ff 0,#a29bfe 100%);color:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;touch-action:none}#gameWrapper{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;width:100%;height:100vh;overflow-y:auto;scrollbar-width:none}#gameWrapper::-webkit-scrollbar{display:none}@media (min-height:800px){#gameWrapper{justify-content:center}}.game-container{position:relative;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:20px;border-radius:30px;box-shadow:var(--shadow);border:1px solid var(--glass-border);max-width:100%;transition:transform .3s ease}canvas{background:rgba(45,52,54,.9);border-radius:20px;display:block;box-shadow:inset 0 0 50px rgba(0,0,0,.5);max-width:100%;height:auto;border:4px solid rgba(255,255,255,.1)}.ui-panel{display:flex;justify-content:space-between;width:100%;max-width:500px;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap;gap:15px}.score-box{background:var(--glass);backdrop-filter:blur(4px);padding:10px 25px;border-radius:50px;font-size:1.2rem;font-weight:700;color:#fff;box-shadow:0 4px 15px rgba(0,0,0,.1);border:1px solid var(--glass-border);text-shadow:0 2px 4px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px}.btn{background:var(--primary);color:#fff;border:none;padding:12px 30px;border-radius:50px;font-family:inherit;font-weight:700;font-size:1.1rem;cursor:pointer;box-shadow:0 6px 0 #d63031;transition:all .2s cubic-bezier(.175, .885, .32, 1.275);text-transform:uppercase;letter-spacing:1px}.btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 #d63031}.btn:active{transform:translateY(4px);box-shadow:0 0 0 #d63031}.btn-secondary{background:var(--secondary);box-shadow:0 6px 0 #00b894}.btn-secondary:hover{box-shadow:0 8px 0 #00b894}.btn-secondary:active{box-shadow:0 0 0 #00b894}.btn-fullscreen{background:rgba(255,255,255,.2);backdrop-filter:blur(5px);color:#fff;border:1px solid rgba(255,255,255,.4);padding:10px 20px;border-radius:20px;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:all .2s}.btn-fullscreen:hover{background:rgba(255,255,255,.3);transform:scale(1.05)}.btn-home{background:#fff;color:var(--primary);box-shadow:0 6px 20px rgba(0,0,0,.15);margin-top:30px;text-decoration:none;display:inline-block;padding:12px 35px;border-radius:50px;font-weight:800;transition:all .3s}.btn-home:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.2)}.overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.95);backdrop-filter:blur(20px);padding:3rem;border-radius:40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);min-width:350px;z-index:100;border:4px solid #fff;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}#startScreen{display:block}#gameOverModal{display:none}@keyframes popIn{from{transform:translate(-50%,-50%) scale(.8);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}h1{color:var(--primary);font-size:3rem;margin-bottom:.5rem;text-shadow:2px 2px 0 var(--accent)}h2{color:var(--dark);font-size:1.5rem;margin-bottom:2rem;opacity:.7}.mode-select{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}.mode-btn{display:flex;flex-direction:column;align-items:center;padding:20px;border-radius:25px;border:3px solid transparent;background:#f1f2f6;cursor:pointer;transition:all .3s ease}.mode-btn:hover{border-color:var(--secondary);background:#fff;transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.1)}.mode-title{font-weight:800;font-size:1.2rem;color:var(--dark);margin-bottom:5px}.mode-desc{font-size:.85rem;color:#636e72;line-height:1.4}.final-score{font-size:2.5rem;margin-bottom:1.5rem;color:var(--dark);font-weight:800}.controls-hint{margin-top:1.5rem;color:rgba(255,255,255,.8);font-size:1rem;font-weight:600;text-shadow:0 2px 4px rgba(0,0,0,.1)}.name-input{margin:15px 0;padding:15px;border-radius:15px;border:3px solid #dfe6e9;font-family:inherit;font-size:1.2rem;width:100%;text-align:center;display:none;outline:0;transition:border-color .3s}.name-input:focus{border-color:var(--secondary)}.dpad-container{margin-top:25px;display:none;flex-direction:column;align-items:center;gap:12px;padding-bottom:20px}.dpad-row{display:flex;gap:12px}.dpad-btn{width:70px;height:70px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.4);border-radius:20px;color:#fff;font-size:1.8rem;display:flex;justify-content:center;align-items:center;cursor:pointer;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 15px rgba(0,0,0,.1);transition:all .1s}.dpad-btn:active{background:rgba(255,255,255,.3);transform:scale(.92);box-shadow:0 2px 5px rgba(0,0,0,.1)}.dpad-spacer{width:70px;height:70px}body.mode-mobile .dpad-container{display:flex!important}body.mode-mobile .controls-hint{display:none}body.mode-tv{cursor:none;font-size:1.4rem}body.mode-tv .btn-fullscreen:focus,body.mode-tv .btn:focus,body.mode-tv .mode-btn:focus{outline:5px solid var(--accent);transform:scale(1.1);box-shadow:0 0 30px var(--accent);z-index:100}#gameWrapper:fullscreen{background:#2d3436;justify-content:flex-start;align-items:center;padding:10px;overflow-y:auto}@media (min-height:700px){#gameWrapper:fullscreen{justify-content:center}}#gameWrapper:fullscreen .game-container{box-shadow:none;border:none;background:0 0;padding:0;max-height:55vh;display:flex;justify-content:center;align-items:center;width:100%}#gameWrapper:fullscreen canvas{max-height:100%;width:auto;max-width:100%}#gameWrapper:fullscreen .ui-panel{margin-bottom:10px;flex-shrink:0}#gameWrapper:fullscreen .dpad-container{margin-top:20px;transform:scale(1.1);transform-origin:top center;flex-shrink:0;padding-bottom:40px}</style></head><body><div id="gameWrapper"><div class="ui-panel"><div style="display:flex;gap:10px"><div class="score-box">🍎 <span id="score">0</span></div><div class="score-box">🏆 <span id="highScoreText">Player</span>: <span id="highScore">0</span></div></div><button class="btn-fullscreen" onclick="toggleFullScreen()">⛶ Full Screen</button></div><div class="game-container"><div id="bonus-container" style="width:100%;height:10px;background:rgba(255,255,255,.5);border-radius:5px;margin-bottom:10px;display:none;overflow:hidden"><div id="bonus-bar" style="width:100%;height:100%;background:#00b894;transition:width .1s linear"></div></div><canvas id="gameCanvas" width="500" height="500"></canvas><div id="startScreen" class="overlay"><h1>SUPER SNAKE</h1><h2>Select Mode</h2><div class="mode-select"><div class="mode-btn" onclick='startGame("classic")'><span class="mode-title">CLASSIC</span> <span class="mode-desc">No walls! Wrap around the screen.</span></div><div class="mode-btn" onclick='startGame("bricked")'><span class="mode-title">BRICKED</span> <span class="mode-desc">Walls kill you. Random obstacles!</span></div></div></div><div id="gameOverModal" class="overlay"><h1 id="gameOverTitle">GAME OVER!</h1><p class="final-score">Score: <span id="finalScore">0</span></p><input type="text" id="playerNameInput" class="name-input" placeholder="Enter your name" maxlength="10"><div class="button-group"><button class="btn" onclick="handleGameOverAction()">PLAY AGAIN</button> <button class="btn btn-secondary" onclick="showStartScreen()">MENU</button></div></div></div><div id="dpad" class="dpad-container"><div class="dpad-row"><button class="dpad-btn" onmousedown='handleDpadInput("up")' ontouchstart='handleDpadInput("up",event)'>▲</button></div><div class="dpad-row"><button class="dpad-btn" onmousedown='handleDpadInput("left")' ontouchstart='handleDpadInput("left",event)'>◀</button><div class="dpad-spacer"></div><button class="dpad-btn" onmousedown='handleDpadInput("right")' ontouchstart='handleDpadInput("right",event)'>▶</button></div><div class="dpad-row"><button class="dpad-btn" onmousedown='handleDpadInput("down")' ontouchstart='handleDpadInput("down",event)'>▼</button></div></div></div><a href="#" class="btn btn-home" onclick="goHome(event)">🏠 BACK TO HOME</a><p class="controls-hint">Use Arrow Keys to Move</p><script>const urlParams=new URLSearchParams(window.location.search),mode=urlParams.get("mode");function handleDpadInput(e,t){t&&t.preventDefault();const o={keyCode:0};"left"===e&&(o.keyCode=37),"up"===e&&(o.keyCode=38),"right"===e&&(o.keyCode=39),"down"===e&&(o.keyCode=40),changeDirection(o)}function toggleFullScreen(){const e=document.getElementById("gameWrapper");document.fullscreenElement?document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.msExitFullscreen&&document.msExitFullscreen():e.requestFullscreen?e.requestFullscreen():e.webkitRequestFullscreen?e.webkitRequestFullscreen():e.msRequestFullscreen&&e.msRequestFullscreen()}"mobile"===mode?document.body.classList.add("mode-mobile"):"tv"===mode&&document.body.classList.add("mode-tv");const SoundManager={ctx:new(window.AudioContext||window.webkitAudioContext),playTone(e,t,o,n=.1){"suspended"===this.ctx.state&&this.ctx.resume();const a=this.ctx.createOscillator(),l=this.ctx.createGain();a.type=t,a.frequency.setValueAtTime(e,this.ctx.currentTime),l.gain.setValueAtTime(n,this.ctx.currentTime),l.gain.exponentialRampToValueAtTime(.01,this.ctx.currentTime+o),a.connect(l),l.connect(this.ctx.destination),a.start(),a.stop(this.ctx.currentTime+o)},playEat(){this.playTone(600,"sine",.1,.1),setTimeout(()=>this.playTone(800,"sine",.1,.1),50)},playBonus(){this.playTone(400,"square",.1,.1),setTimeout(()=>this.playTone(600,"square",.1,.1),100),setTimeout(()=>this.playTone(1e3,"square",.2,.1),200)},playDie(){this.playTone(200,"sawtooth",.3,.2),setTimeout(()=>this.playTone(150,"sawtooth",.3,.2),150),setTimeout(()=>this.playTone(100,"sawtooth",.4,.2),300)},playClick(){this.playTone(400,"triangle",.05,.05)}},canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d"),scoreEl=document.getElementById("score"),highScoreEl=document.getElementById("highScore"),highScoreTextEl=document.getElementById("highScoreText"),finalScoreEl=document.getElementById("finalScore"),modal=document.getElementById("gameOverModal"),startScreen=document.getElementById("startScreen"),gameOverTitle=document.getElementById("gameOverTitle"),nameInput=document.getElementById("playerNameInput"),bonusContainer=document.getElementById("bonus-container"),bonusBar=document.getElementById("bonus-bar"),gridSize=20,tileCount=canvas.width/20;let gameLoop,score=0,gameMode="classic",highScore=0,highScoreName="Player",velocityX=0,velocityY=0,snake=[{x:10,y:10}],food={x:15,y:15},bonusFood=null,walls=[],isGameOver=!1,isExploding=!1,particles=[],moveQueue=[],baseSpeed=150,currentSpeed=baseSpeed;const minSpeed=60,speedStep=2;let fruitsEaten=0;const fruitsForBonus=5,bonusDuration=7e3;let bonusTimerInterval,bonusStartTime=0,foodsSinceLastGold=0;function loadHighScore(){const e="classic"===gameMode?"snakeHighScoreClassic":"snakeHighScoreBricked",t="classic"===gameMode?"snakeHighScoreClassicName":"snakeHighScoreBrickedName";highScore=localStorage.getItem(e)||0,highScoreName=localStorage.getItem(t)||"Player",highScoreEl.textContent=highScore,highScoreTextEl.textContent=highScoreName}function showStartScreen(){SoundManager.playClick(),modal.style.display="none",startScreen.style.display="block",isGameOver=!0,gameLoop&&clearTimeout(gameLoop)}function startGame(e){SoundManager.playClick(),"suspended"===SoundManager.ctx.state&&SoundManager.ctx.resume(),gameMode=e,startScreen.style.display="none",loadHighScore(),resetGame()}function resetGame(){score=0,scoreEl.textContent=score,velocityX=0,velocityY=0,snake=[{x:10,y:10}],fruitsEaten=0,currentSpeed=baseSpeed,isGameOver=!1,isExploding=!1,particles=[],moveQueue=[],modal.style.display="none",nameInput.style.display="none",nameInput.value="",foodsSinceLastGold=0,clearBonus(),"bricked"===gameMode?generateWalls():walls=[],placeFood(),gameLoop&&clearTimeout(gameLoop),gameLoop=setTimeout(gameStep,currentSpeed)}function generateWalls(){walls=[];for(let e=0;e<8;e++){let e,t,o=!1;for(;!o;){e=Math.floor(Math.random()*tileCount),t=Math.floor(Math.random()*tileCount);if(Math.abs(e-10)+Math.abs(t-10)>5){o=!0;for(let n of walls)n.x===e&&n.y===t&&(o=!1)}}walls.push({x:e,y:t})}}function placeFood(){let e=!1;Math.random()<.025||foodsSinceLastGold>=15?(e=!0,foodsSinceLastGold=0):foodsSinceLastGold++;let t,o,n=!1;for(;!n;){t=Math.floor(Math.random()*tileCount),o=Math.floor(Math.random()*tileCount),n=!0;for(let e of snake)if(e.x===t&&e.y===o){n=!1;break}if(n)for(let e of walls)if(e.x===t&&e.y===o){n=!1;break}}food={x:t,y:o,type:e?"gold":"normal"}}function spawnBonus(){bonusFood={x:Math.floor(Math.random()*tileCount),y:Math.floor(Math.random()*tileCount)},bonusContainer.style.display="block",bonusBar.style.width="100%",bonusStartTime=Date.now(),bonusTimerInterval&&clearInterval(bonusTimerInterval),bonusTimerInterval=setInterval(()=>{const e=Date.now()-bonusStartTime,t=Math.max(0,7e3-e),o=t/7e3*100;bonusBar.style.width=o+"%",t<=0&&clearBonus()},100)}function clearBonus(){bonusFood=null,bonusContainer.style.display="none",bonusTimerInterval&&clearInterval(bonusTimerInterval)}loadHighScore(),draw(),startScreen.style.display="block",modal.style.display="none";let selectedModeIndex=0;const modeBtns=document.querySelectorAll(".mode-btn");function updateModeSelection(){modeBtns.forEach((e,t)=>{t===selectedModeIndex?(e.style.borderColor="var(--secondary)",e.style.transform="scale(1.05)",e.style.background="white",e.style.boxShadow="0 10px 20px rgba(0, 0, 0, 0.1)"):(e.style.borderColor="transparent",e.style.transform="scale(1)",e.style.background="#f1f2f6",e.style.boxShadow="none")})}function changeDirection(e){const t=e.key,o=e.keyCode;let n=!1;"Backspace"!==t&&"Escape"!==t&&8!==o&&27!==o&&461!==o&&10009!==o&&4!==o||(window.location.href="index.html",n=!0),"0"===t&&(toggleFullScreen(),n=!0);const a=()=>["5","Enter"," "].includes(t)||13===o||23===o,l=()=>["4","ArrowLeft","a","A"].includes(t)||37===o||21===o,i=()=>["6","ArrowRight","d","D"].includes(t)||39===o||22===o;if("none"!==startScreen.style.display){if(l())selectedModeIndex=0,updateModeSelection(),SoundManager.playClick(),n=!0;else if(i())selectedModeIndex=1,updateModeSelection(),SoundManager.playClick(),n=!0;else if(a()){startGame(0===selectedModeIndex?"classic":"bricked"),n=!0}}else if("none"!==modal.style.display)a()&&(handleGameOverAction(),n=!0);else if(!isGameOver){let e=null;if(l()?e="LEFT":["2","ArrowUp","w","W"].includes(t)||38===o||19===o?e="UP":i()?e="RIGHT":(["8","ArrowDown","s","S"].includes(t)||40===o||20===o)&&(e="DOWN"),e){n=!0;const t=moveQueue.length>0?moveQueue[moveQueue.length-1]:{x:velocityX,y:velocityY};let o=null;"LEFT"===e&&1!==t.x&&(o={x:-1,y:0}),"UP"===e&&1!==t.y&&(o={x:0,y:-1}),"RIGHT"===e&&-1!==t.x&&(o={x:1,y:0}),"DOWN"===e&&-1!==t.y&&(o={x:0,y:1}),o&&moveQueue.length<3&&moveQueue.push(o)}}n&&(e.preventDefault(),e.stopPropagation())}function handleGameOverAction(){if(SoundManager.playClick(),"none"!==nameInput.style.display){const e=nameInput.value.trim()||"Anonymous",t="classic"===gameMode?"snakeHighScoreClassic":"snakeHighScoreBricked",o="classic"===gameMode?"snakeHighScoreClassicName":"snakeHighScoreBrickedName";highScore=score,highScoreName=e,localStorage.setItem(t,highScore),localStorage.setItem(o,highScoreName),highScoreEl.textContent=highScore,highScoreTextEl.textContent=highScoreName}resetGame()}function isColliding(e,t){for(let o of snake)if(o.x===e&&o.y===t)return!0;return!1}function gameStep(){if(isGameOver)return;if(moveQueue.length>0){const e=moveQueue.shift();(0!==velocityX||0!==velocityY)&&e.x===-velocityX&&e.y===-velocityY||(velocityX=e.x,velocityY=e.y)}if(0===velocityX&&0===velocityY)return draw(),void(gameLoop=setTimeout(gameStep,currentSpeed));let e=snake[0].x+velocityX,t=snake[0].y+velocityY;if(e<0&&(e=tileCount-1),e>=tileCount&&(e=0),t<0&&(t=tileCount-1),t>=tileCount&&(t=0),"bricked"===gameMode)for(let o of walls)if(e===o.x&&t===o.y)return void triggerGameOver();const o={x:e,y:t};isColliding(o.x,o.y)?triggerGameOver():(snake.unshift(o),o.x===food.x&&o.y===food.y?(SoundManager.playEat(),score+=10,scoreEl.textContent=score,fruitsEaten++,"undefined"!=typeof GoldManager&&"gold"===food.type&&GoldManager.addCoins(1),placeFood(),fruitsEaten%5==0&&spawnBonus(),currentSpeed>60&&(currentSpeed-=2)):bonusFood&&o.x===bonusFood.x&&o.y===bonusFood.y?(SoundManager.playBonus(),score+=50,scoreEl.textContent=score,clearBonus()):snake.pop(),draw(),gameLoop=setTimeout(gameStep,currentSpeed))}function triggerGameOver(){SoundManager.playDie(),isGameOver=!0,finalScoreEl.textContent=score,"undefined"!=typeof TimeManager&&TimeManager.syncTimeRemote(!0),isExploding=!0,createParticles(20*snake[0].x+10,20*snake[0].y+10),setTimeout(()=>{isExploding=!1,modal.style.display="block";const e="classic"===gameMode?"snakeHighScoreClassic":"snakeHighScoreBricked",t=parseInt(localStorage.getItem(e)||"0");score>t&&(nameInput.style.display="block",nameInput.focus())},1e3)}function createParticles(e,t){for(let o=0;o<20;o++)particles.push({x:e,y:t,vx:10*(Math.random()-.5),vy:10*(Math.random()-.5),life:1,color:`hsl(${60*Math.random()+10}, 100%, 50%)`});animateParticles()}function animateParticles(){if(isExploding){ctx.clearRect(0,0,canvas.width,canvas.height);for(let e=particles.length-1;e>=0;e--){let t=particles[e];t.x+=t.vx,t.y+=t.vy,t.life-=.05,ctx.fillStyle=t.color,ctx.globalAlpha=t.life,ctx.beginPath(),ctx.arc(t.x,t.y,5,0,2*Math.PI),ctx.fill(),ctx.globalAlpha=1,t.life<=0&&particles.splice(e,1)}particles.length>0&&requestAnimationFrame(animateParticles)}}function draw(){if(!isExploding){ctx.clearRect(0,0,canvas.width,canvas.height),ctx.fillStyle="#636e72";for(let e of walls)ctx.fillRect(20*e.x,20*e.y,18,18);for(let e=0;e<snake.length;e++)ctx.fillStyle=0===e?"#00b894":"#55efc4",ctx.fillRect(20*snake[e].x,20*snake[e].y,18,18),0===e&&(ctx.fillStyle="white",ctx.fillRect(20*snake[e].x+4,20*snake[e].y+4,4,4),ctx.fillRect(20*snake[e].x+12,20*snake[e].y+4,4,4));"gold"===food.type?(ctx.fillStyle="#FFD700",ctx.beginPath(),ctx.arc(20*food.x+10,20*food.y+10,8,0,2*Math.PI),ctx.fill(),ctx.fillStyle="#B8860B",ctx.font="bold 16px sans-serif",ctx.textAlign="center",ctx.textBaseline="middle",ctx.fillText("$",20*food.x+10,20*food.y+10+1)):(ctx.fillStyle="#ff7675",ctx.beginPath(),ctx.arc(20*food.x+10,20*food.y+10,8,0,2*Math.PI),ctx.fill()),bonusFood&&(ctx.fillStyle="#00b894",ctx.beginPath(),ctx.arc(20*bonusFood.x+10,20*bonusFood.y+10,10,0,2*Math.PI),ctx.fill(),ctx.fillStyle="#FFF",ctx.fillRect(20*bonusFood.x+5,20*bonusFood.y+5,4,4))}}async function goHome(e){e.preventDefault(),"undefined"!=typeof TimeManager&&await TimeManager.syncTimeRemote(!0),window.location.href="index.html"}updateModeSelection(),document.addEventListener("keydown",changeDirection)</script><script src="global.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Snake | Man Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2D3436;
+            --light: #F7F9F9;
+            --snake-head: #00b894;
+            --snake-body: #55efc4;
+            --food: #ff7675;
+            --wall: #636e72;
+            --glass: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #a29bfe 100%);
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            /* Prevent scrolling generally */
+            touch-action: none;
+            /* Crucial for mobile game */
+        }
+
+        /* Wrapper for Fullscreen Mode */
+        #gameWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            /* Allow scrolling if content overflows vertically */
+            scrollbar-width: none;
+            /* Hide scrollbar Firefox */
+        }
+
+        #gameWrapper::-webkit-scrollbar {
+            display: none;
+            /* Hide scrollbar Chrome/Safari */
+        }
+
+        /* Center content vertically on larger screens */
+        @media (min-height: 800px) {
+            #gameWrapper {
+                justify-content: center;
+            }
+        }
+
+        .game-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass-border);
+            max-width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        canvas {
+            background: rgba(45, 52, 54, 0.9);
+            border-radius: 20px;
+            display: block;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            height: auto;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: var(--glass);
+            backdrop-filter: blur(4px);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--glass-border);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #d63031;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #d63031;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #d63031;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            box-shadow: 0 6px 0 #00b894;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 0 #00b894;
+        }
+
+        .btn-secondary:active {
+            box-shadow: 0 0 0 #00b894;
+        }
+
+        .btn-fullscreen {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .btn-home {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            margin-top: 30px;
+            text-decoration: none;
+            display: inline-block;
+            padding: 12px 35px;
+            border-radius: 50px;
+            font-weight: 800;
+            transition: all 0.3s;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-width: 350px;
+            z-index: 100;
+            border: 4px solid white;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #startScreen {
+            display: block;
+        }
+
+        #gameOverModal {
+            display: none;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 0px var(--accent);
+        }
+
+        h2 {
+            color: var(--dark);
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.7;
+        }
+
+        .mode-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mode-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 25px;
+            border: 3px solid transparent;
+            background: #f1f2f6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover {
+            border-color: var(--secondary);
+            background: white;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .mode-desc {
+            font-size: 0.85rem;
+            color: #636e72;
+            line-height: 1.4;
+        }
+
+        .final-score {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            font-weight: 800;
+        }
+
+        .controls-hint {
+            margin-top: 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .name-input {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px solid #dfe6e9;
+            font-family: inherit;
+            font-size: 1.2rem;
+            width: 100%;
+            text-align: center;
+            display: none;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .name-input:focus {
+            border-color: var(--secondary);
+        }
+
+        /* D-pad Styles */
+        .dpad-container {
+            margin-top: 25px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            /* Extra space for mobile bottom bar */
+        }
+
+        .dpad-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dpad-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.1s;
+        }
+
+        .dpad-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.92);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .dpad-spacer {
+            width: 70px;
+            height: 70px;
+        }
+
+        /* Mobile Mode specific styles */
+        body.mode-mobile .dpad-container {
+            display: flex !important;
+        }
+
+        body.mode-mobile .controls-hint {
+            display: none;
+        }
+
+        /* TV Mode specific styles */
+        body.mode-tv {
+            cursor: none;
+            font-size: 1.4rem;
+            /* Larger text */
+        }
+
+        body.mode-tv .btn:focus,
+        body.mode-tv .mode-btn:focus,
+        body.mode-tv .btn-fullscreen:focus {
+            outline: 5px solid var(--accent);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px var(--accent);
+            z-index: 100;
+        }
+
+        /* Improved Fullscreen Scaling */
+        #gameWrapper:fullscreen {
+            background: #2D3436;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        @media (min-height: 700px) {
+            #gameWrapper:fullscreen {
+                justify-content: center;
+            }
+        }
+
+        #gameWrapper:fullscreen .game-container {
+            box-shadow: none;
+            border: none;
+            background: transparent;
+            padding: 0;
+            max-height: 55vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        #gameWrapper:fullscreen canvas {
+            max-height: 100%;
+            width: auto;
+            max-width: 100%;
+        }
+
+        #gameWrapper:fullscreen .ui-panel {
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        #gameWrapper:fullscreen .dpad-container {
+            margin-top: 20px;
+            transform: scale(1.1);
+            transform-origin: top center;
+            flex-shrink: 0;
+            padding-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="gameWrapper">
+        <div class="ui-panel">
+            <div style="display: flex; gap: 10px;">
+                <div class="score-box">🍎 <span id="score">0</span></div>
+                <div class="score-box">🏆 <span id="highScoreText">Player</span>: <span id="highScore">0</span></div>
+            </div>
+            <button class="btn-fullscreen" onclick="toggleFullScreen()">⛶ Full Screen</button>
+        </div>
+
+
+
+        <div class="game-container">
+            <!-- Bonus Timer Bar -->
+            <div id="bonus-container"
+                style="width: 100%; height: 10px; background: rgba(255,255,255,0.5); border-radius: 5px; margin-bottom: 10px; display: none; overflow: hidden;">
+                <div id="bonus-bar"
+                    style="width: 100%; height: 100%; background: #00b894; transition: width 0.1s linear;">
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+            <!-- Start Screen -->
+            <div id="startScreen" class="overlay">
+                <h1>SUPER SNAKE</h1>
+                <h2>Select Mode</h2>
+                <div class="mode-select">
+                    <div class="mode-btn" onclick="startGame('classic')">
+                        <span class="mode-title">CLASSIC</span>
+                        <span class="mode-desc">No walls! Wrap around the screen.</span>
+                    </div>
+                    <div class="mode-btn" onclick="startGame('bricked')">
+                        <span class="mode-title">BRICKED</span>
+                        <span class="mode-desc">Walls kill you. Random obstacles!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Over Modal -->
+            <div id="gameOverModal" class="overlay">
+                <h1 id="gameOverTitle">GAME OVER!</h1>
+                <p class="final-score">Score: <span id="finalScore">0</span></p>
+                <input type="text" id="playerNameInput" class="name-input" placeholder="Enter your name" maxlength="10">
+                <div class="button-group">
+                    <button class="btn" onclick="handleGameOverAction()">PLAY AGAIN</button>
+                    <button class="btn btn-secondary" onclick="showStartScreen()">MENU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- D-pad Controls (Hidden by default, shown in mobile mode) -->
+        <div id="dpad" class="dpad-container">
+            <div class="dpad-row">
+                <button class="dpad-btn" onmousedown="handleDpadInput('up')"
+                    ontouchstart="handleDpadInput('up', event)">▲</button>
+            </div>
+            <div class="dpad-row">
+                <button class="dpad-btn" onmousedown="handleDpadInput('left')"
+                    ontouchstart="handleDpadInput('left', event)">◀</button>
+                <div class="dpad-spacer"></div>
+                <button class="dpad-btn" onmousedown="handleDpadInput('right')"
+                    ontouchstart="handleDpadInput('right', event)">▶</button>
+            </div>
+            <div class="dpad-row">
+                <button class="dpad-btn" onmousedown="handleDpadInput('down')"
+                    ontouchstart="handleDpadInput('down', event)">▼</button>
+            </div>
+        </div>
+    </div>
+
+    <a href="#" class="btn btn-home" onclick="goHome(event)">🏠 BACK TO HOME</a>
+    <p class="controls-hint">Use Arrow Keys to Move</p>
+
+    <script>
+        // Check URL params for mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        if (mode === 'mobile') {
+            document.body.classList.add('mode-mobile');
+        } else if (mode === 'tv') {
+            document.body.classList.add('mode-tv');
+        }
+
+        function handleDpadInput(direction, event) {
+            if (event) event.preventDefault(); // Prevent default touch behavior
+
+            // Simulate key press
+            const keyEvent = { keyCode: 0 };
+            if (direction === 'left') keyEvent.keyCode = 37;
+            if (direction === 'up') keyEvent.keyCode = 38;
+            if (direction === 'right') keyEvent.keyCode = 39;
+            if (direction === 'down') keyEvent.keyCode = 40;
+
+            changeDirection(keyEvent);
+        }
+
+        // Full Screen Logic
+        function toggleFullScreen() {
+            const elem = document.getElementById("gameWrapper");
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Sound Manager using Web Audio API
+        const SoundManager = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+
+            playTone(freq, type, duration, vol = 0.1) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+
+            playEat() {
+                this.playTone(600, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(800, 'sine', 0.1, 0.1), 50);
+            },
+
+            playBonus() {
+                this.playTone(400, 'square', 0.1, 0.1);
+                setTimeout(() => this.playTone(600, 'square', 0.1, 0.1), 100);
+                setTimeout(() => this.playTone(1000, 'square', 0.2, 0.1), 200);
+            },
+
+            playDie() {
+                this.playTone(200, 'sawtooth', 0.3, 0.2);
+                setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.2), 150);
+                setTimeout(() => this.playTone(100, 'sawtooth', 0.4, 0.2), 300);
+            },
+
+            playClick() {
+                this.playTone(400, 'triangle', 0.05, 0.05);
+            }
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const highScoreTextEl = document.getElementById('highScoreText');
+        const finalScoreEl = document.getElementById('finalScore');
+        const modal = document.getElementById('gameOverModal');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const nameInput = document.getElementById('playerNameInput');
+        const bonusContainer = document.getElementById('bonus-container');
+        const bonusBar = document.getElementById('bonus-bar');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let score = 0;
+        let gameMode = 'classic'; // 'classic' or 'bricked'
+
+        // High Score Variables
+        let highScore = 0;
+        let highScoreName = 'Player';
+
+        let velocityX = 0;
+        let velocityY = 0;
+        let snake = [{ x: 10, y: 10 }];
+        let food = { x: 15, y: 15 };
+        let bonusFood = null;
+        let walls = [];
+
+        let gameLoop;
+        let isGameOver = false;
+        let isExploding = false;
+        let particles = [];
+
+        // Input buffering
+        let moveQueue = [];
+
+        // Game settings
+        let baseSpeed = 150;
+        let currentSpeed = baseSpeed;
+        const minSpeed = 60;
+        const speedStep = 2;
+
+        // Bonus fruit settings
+        let fruitsEaten = 0;
+        const fruitsForBonus = 5;
+        const bonusDuration = 7000;
+        let bonusStartTime = 0;
+        let bonusTimerInterval;
+        let foodsSinceLastGold = 0;
+
+        // Initialize display
+        loadHighScore();
+        draw(); // Draw initial state (empty board)
+        startScreen.style.display = 'block';
+        modal.style.display = 'none';
+
+        function loadHighScore() {
+            const key = gameMode === 'classic' ? 'snakeHighScoreClassic' : 'snakeHighScoreBricked';
+            const nameKey = gameMode === 'classic' ? 'snakeHighScoreClassicName' : 'snakeHighScoreBrickedName';
+
+            highScore = localStorage.getItem(key) || 0;
+            highScoreName = localStorage.getItem(nameKey) || 'Player';
+
+            highScoreEl.textContent = highScore;
+            highScoreTextEl.textContent = highScoreName;
+        }
+
+        function showStartScreen() {
+            SoundManager.playClick();
+            modal.style.display = 'none';
+            startScreen.style.display = 'block';
+            isGameOver = true; // Prevent movement
+            if (gameLoop) clearTimeout(gameLoop);
+        }
+
+        function startGame(mode) {
+            SoundManager.playClick();
+            // Resume AudioContext if needed (browser policy)
+            if (SoundManager.ctx.state === 'suspended') SoundManager.ctx.resume();
+
+            gameMode = mode;
+            startScreen.style.display = 'none';
+            loadHighScore();
+            resetGame();
+        }
+
+        function resetGame() {
+            score = 0;
+            scoreEl.textContent = score;
+            velocityX = 0;
+            velocityY = 0;
+            snake = [{ x: 10, y: 10 }];
+            fruitsEaten = 0;
+            currentSpeed = baseSpeed;
+            isGameOver = false;
+            isExploding = false;
+            particles = [];
+            moveQueue = []; // Clear queue
+            modal.style.display = 'none';
+            nameInput.style.display = 'none';
+            nameInput.value = '';
+            foodsSinceLastGold = 0;
+
+            clearBonus();
+
+            // Generate walls for Bricked mode
+            if (gameMode === 'bricked') {
+                generateWalls();
+            } else {
+                walls = [];
+            }
+
+            placeFood();
+
+            if (gameLoop) clearTimeout(gameLoop);
+            gameLoop = setTimeout(gameStep, currentSpeed);
+        }
+
+        function generateWalls() {
+            walls = [];
+            const numWalls = 8; // Number of random bricks
+
+            for (let i = 0; i < numWalls; i++) {
+                let x, y;
+                let safe = false;
+                while (!safe) {
+                    x = Math.floor(Math.random() * tileCount);
+                    y = Math.floor(Math.random() * tileCount);
+                    // Keep walls away from start position (10,10)
+                    const dist = Math.abs(x - 10) + Math.abs(y - 10);
+                    if (dist > 5) {
+                        safe = true;
+                        // Also check if wall already exists
+                        for (let w of walls) {
+                            if (w.x === x && w.y === y) safe = false;
+                        }
+                    }
+                }
+                walls.push({ x, y });
+            }
+        }
+
+        function placeFood() {
+            let isGold = false;
+            // 2.5% chance or forced after 15 non-gold foods
+            if (Math.random() < 0.025 || foodsSinceLastGold >= 15) {
+                isGold = true;
+                foodsSinceLastGold = 0;
+            } else {
+                foodsSinceLastGold++;
+            }
+
+            let valid = false;
+            let fx, fy;
+
+            // Try to find a valid position
+            while (!valid) {
+                fx = Math.floor(Math.random() * tileCount);
+                fy = Math.floor(Math.random() * tileCount);
+                valid = true;
+
+                // Check snake collision
+                for (let part of snake) {
+                    if (part.x === fx && part.y === fy) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                // Check wall collision
+                if (valid) {
+                    for (let w of walls) {
+                        if (w.x === fx && w.y === fy) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            food = {
+                x: fx,
+                y: fy,
+                type: isGold ? 'gold' : 'normal'
+            };
+        }
+
+        function spawnBonus() {
+            bonusFood = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            // Check collision with snake/walls/food
+            // (Simplified check)
+
+            bonusContainer.style.display = 'block';
+            bonusBar.style.width = '100%';
+            bonusStartTime = Date.now();
+
+            if (bonusTimerInterval) clearInterval(bonusTimerInterval);
+
+            bonusTimerInterval = setInterval(() => {
+                const elapsed = Date.now() - bonusStartTime;
+                const remaining = Math.max(0, bonusDuration - elapsed);
+                const percent = (remaining / bonusDuration) * 100;
+                bonusBar.style.width = percent + '%';
+
+                if (remaining <= 0) {
+                    clearBonus();
+                }
+            }, 100);
+        }
+
+        function clearBonus() {
+            bonusFood = null;
+            bonusContainer.style.display = 'none';
+            if (bonusTimerInterval) clearInterval(bonusTimerInterval);
+        }
+
+        // Mode Selection Logic
+        let selectedModeIndex = 0; // 0: Classic, 1: Bricked
+        const modeBtns = document.querySelectorAll('.mode-btn');
+
+        function updateModeSelection() {
+            modeBtns.forEach((btn, index) => {
+                if (index === selectedModeIndex) {
+                    btn.style.borderColor = 'var(--secondary)';
+                    btn.style.transform = 'scale(1.05)';
+                    btn.style.background = 'white';
+                    btn.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+                } else {
+                    btn.style.borderColor = 'transparent';
+                    btn.style.transform = 'scale(1)';
+                    btn.style.background = '#f1f2f6';
+                    btn.style.boxShadow = 'none';
+                }
+            });
+        }
+
+        // Initialize selection visual
+        updateModeSelection();
+
+        function changeDirection(event) {
+            const key = event.key;
+            const keyCode = event.keyCode;
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37;
+            const TV_UP = 38;
+            const TV_RIGHT = 39;
+            const TV_DOWN = 40;
+            const TV_ENTER = 13;
+
+            // Alternate TV Keys
+            const ALT_LEFT = 21;
+            const ALT_UP = 19;
+            const ALT_RIGHT = 22;
+            const ALT_DOWN = 20;
+            const ALT_ENTER = 23;
+            const ALT_BACK = 4;
+            const TIZEN_BACK = 10009;
+
+            let handled = false;
+
+            // Handle Back Button
+            if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
+                window.location.href = 'index.html';
+                handled = true;
+            }
+
+            // Toggle Fullscreen with 0
+            if (key === '0') {
+                toggleFullScreen();
+                handled = true;
+            }
+
+            // Helper to check keys
+            const isEnter = () => ['5', 'Enter', ' '].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER;
+            const isLeft = () => ['4', 'ArrowLeft', 'a', 'A'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT;
+            const isRight = () => ['6', 'ArrowRight', 'd', 'D'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT;
+            const isUp = () => ['2', 'ArrowUp', 'w', 'W'].includes(key) || keyCode === TV_UP || keyCode === ALT_UP;
+            const isDown = () => ['8', 'ArrowDown', 's', 'S'].includes(key) || keyCode === TV_DOWN || keyCode === ALT_DOWN;
+
+            // Handle Start Screen Navigation
+            if (startScreen.style.display !== 'none') {
+                if (isLeft()) {
+                    selectedModeIndex = 0;
+                    updateModeSelection();
+                    SoundManager.playClick();
+                    handled = true;
+                } else if (isRight()) {
+                    selectedModeIndex = 1;
+                    updateModeSelection();
+                    SoundManager.playClick();
+                    handled = true;
+                } else if (isEnter()) {
+                    const mode = selectedModeIndex === 0 ? 'classic' : 'bricked';
+                    startGame(mode);
+                    handled = true;
+                }
+            }
+            // Handle Game Over Screen Navigation
+            else if (modal.style.display !== 'none') {
+                if (isEnter()) {
+                    handleGameOverAction();
+                    handled = true;
+                }
+            }
+            // Game Play Controls
+            else if (!isGameOver) {
+                let direction = null;
+
+                if (isLeft()) direction = 'LEFT';
+                else if (isUp()) direction = 'UP';
+                else if (isRight()) direction = 'RIGHT';
+                else if (isDown()) direction = 'DOWN';
+
+                if (direction) {
+                    handled = true;
+                    // Add to queue
+                    const lastMove = moveQueue.length > 0 ? moveQueue[moveQueue.length - 1] : { x: velocityX, y: velocityY };
+                    let nextMove = null;
+
+                    if (direction === 'LEFT' && lastMove.x !== 1) nextMove = { x: -1, y: 0 };
+                    if (direction === 'UP' && lastMove.y !== 1) nextMove = { x: 0, y: -1 };
+                    if (direction === 'RIGHT' && lastMove.x !== -1) nextMove = { x: 1, y: 0 };
+                    if (direction === 'DOWN' && lastMove.y !== -1) nextMove = { x: 0, y: 1 };
+
+                    if (nextMove) {
+                        // Limit queue size to prevent lag
+                        if (moveQueue.length < 3) {
+                            moveQueue.push(nextMove);
+                        }
+                    }
+                }
+            }
+
+            if (handled) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+
+        function handleGameOverAction() {
+            SoundManager.playClick();
+            if (nameInput.style.display !== 'none') {
+                const name = nameInput.value.trim() || 'Anonymous';
+                const key = gameMode === 'classic' ? 'snakeHighScoreClassic' : 'snakeHighScoreBricked';
+                const nameKey = gameMode === 'classic' ? 'snakeHighScoreClassicName' : 'snakeHighScoreBrickedName';
+
+                highScore = score;
+                highScoreName = name;
+                localStorage.setItem(key, highScore);
+                localStorage.setItem(nameKey, highScoreName);
+                highScoreEl.textContent = highScore;
+                highScoreTextEl.textContent = highScoreName;
+            }
+            resetGame();
+        }
+
+        function isColliding(x, y) {
+            // Check self collision
+            for (let part of snake) {
+                if (part.x === x && part.y === y) return true;
+            }
+            return false;
+        }
+
+        function gameStep() {
+            if (isGameOver) return;
+
+            // Handle Input
+            if (moveQueue.length > 0) {
+                const move = moveQueue.shift();
+                // Prevent reversing if moving
+                if (velocityX !== 0 || velocityY !== 0) {
+                    if ((move.x === -velocityX && move.y === -velocityY)) {
+                        // Ignore reverse move
+                    } else {
+                        velocityX = move.x;
+                        velocityY = move.y;
+                    }
+                } else {
+                    // If stationary, just accept the move
+                    velocityX = move.x;
+                    velocityY = move.y;
+                }
+            }
+
+            // If not moving, just draw and loop
+            if (velocityX === 0 && velocityY === 0) {
+                draw();
+                gameLoop = setTimeout(gameStep, currentSpeed);
+                return;
+            }
+
+            let headX = snake[0].x + velocityX;
+            let headY = snake[0].y + velocityY;
+
+            // Wrap around (applies to both modes)
+            if (headX < 0) headX = tileCount - 1;
+            if (headX >= tileCount) headX = 0;
+            if (headY < 0) headY = tileCount - 1;
+            if (headY >= tileCount) headY = 0;
+
+            // Collision Logic based on Mode
+            if (gameMode === 'bricked') {
+                // Check inner walls
+                for (let w of walls) {
+                    if (headX === w.x && headY === w.y) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+            }
+
+            const head = { x: headX, y: headY };
+
+            if (isColliding(head.x, head.y)) {
+                triggerGameOver();
+                return;
+            }
+
+            snake.unshift(head);
+
+            // Eat Food
+            if (head.x === food.x && head.y === food.y) {
+                SoundManager.playEat();
+                score += 10;
+                scoreEl.textContent = score;
+                fruitsEaten++;
+                if (typeof GoldManager !== 'undefined' && food.type === 'gold') {
+                    GoldManager.addCoins(1);
+                }
+                placeFood();
+                if (fruitsEaten % fruitsForBonus === 0) spawnBonus();
+                if (currentSpeed > minSpeed) currentSpeed -= speedStep;
+            }
+            // Eat Bonus
+            else if (bonusFood && head.x === bonusFood.x && head.y === bonusFood.y) {
+                SoundManager.playBonus();
+                score += 50;
+                scoreEl.textContent = score;
+                clearBonus();
+            }
+            else {
+                snake.pop();
+            }
+
+            draw();
+            gameLoop = setTimeout(gameStep, currentSpeed);
+        }
+
+        function triggerGameOver() {
+            SoundManager.playDie();
+            isGameOver = true;
+            finalScoreEl.textContent = score;
+
+            // Sync Time & Gold on Game Over
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.syncTimeRemote(true);
+            }
+
+            // Explosion effect
+            isExploding = true;
+            createParticles(snake[0].x * gridSize + gridSize / 2, snake[0].y * gridSize + gridSize / 2);
+
+            // Wait for explosion then show modal
+            setTimeout(() => {
+                isExploding = false;
+                modal.style.display = 'block';
+
+                // Check if high score
+                const key = gameMode === 'classic' ? 'snakeHighScoreClassic' : 'snakeHighScoreBricked';
+                const currentHigh = parseInt(localStorage.getItem(key) || '0');
+
+                if (score > currentHigh) {
+                    nameInput.style.display = 'block';
+                    nameInput.focus();
+                }
+            }, 1000);
+        }
+
+        function createParticles(x, y) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: `hsl(${Math.random() * 60 + 10}, 100%, 50%)`
+                });
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            if (!isExploding) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear for transparency
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            if (particles.length > 0) {
+                requestAnimationFrame(animateParticles);
+            }
+        }
+
+        function draw() {
+            if (isExploding) return; // Don't draw game during explosion
+
+            // Clear screen to transparent (let CSS background show)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Walls
+            ctx.fillStyle = '#636e72'; // var(--wall)
+            for (let w of walls) {
+                ctx.fillRect(w.x * gridSize, w.y * gridSize, gridSize - 2, gridSize - 2);
+            }
+
+            // Draw Snake
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? '#00b894' : '#55efc4'; // var(--snake-head) : var(--snake-body)
+                ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
+
+                // Eyes for head
+                if (i === 0) {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(snake[i].x * gridSize + 4, snake[i].y * gridSize + 4, 4, 4);
+                    ctx.fillRect(snake[i].x * gridSize + 12, snake[i].y * gridSize + 4, 4, 4);
+                }
+            }
+
+            // Draw Food
+            if (food.type === 'gold') {
+                // Gold Coin Appearance
+                ctx.fillStyle = '#FFD700'; // Gold
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Dollar sign or shine
+                ctx.fillStyle = '#B8860B';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2 + 1);
+            } else {
+                // Normal Food
+                ctx.fillStyle = '#ff7675'; // var(--food)
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw Bonus Food
+            if (bonusFood) {
+                ctx.fillStyle = '#00b894'; // Green
+                ctx.beginPath();
+                ctx.arc(bonusFood.x * gridSize + gridSize / 2, bonusFood.y * gridSize + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Sparkle
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(bonusFood.x * gridSize + 5, bonusFood.y * gridSize + 5, 4, 4);
+            }
+        }
+
+        // Keyboard Input
+        document.addEventListener('keydown', changeDirection);
+
+        async function goHome(event) {
+            event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                // Sync data before leaving
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
+    </script>
+    <script src="global.js?v=11"></script>
+</body>
+
+</html>

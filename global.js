@@ -185,22 +185,30 @@ const GoldManager = {
     },
 
     addCoins: function (amount) {
-        if (!localStorage.getItem('is_logged_in')) {
+        const isLoggedIn = localStorage.getItem('is_logged_in') === 'true' || !!localStorage.getItem('user_name');
+
+        if (!isLoggedIn) {
             console.log("Not logged in. Cannot earn gold.");
             return;
         }
 
-        if (this.dailyEarned >= this.DAILY_CAP) {
-            console.log("Daily gold cap reached.");
+        // Fix: Ensure we are using integers
+        const daily = parseInt(this.dailyEarned) || 0;
+        const cap = parseInt(this.DAILY_CAP) || 15;
+
+        if (daily >= cap) {
+            console.log("Daily gold cap reached (" + daily + "/" + cap + ")");
+            this.updateUIDisplay(); // ensure UI shows max
             return;
         }
 
-        const allowed = this.DAILY_CAP - this.dailyEarned;
+        const allowed = cap - daily;
         const actualAdd = Math.min(amount, allowed);
 
         if (actualAdd > 0) {
-            this.coins += actualAdd;
-            this.dailyEarned += actualAdd;
+            this.coins = (parseInt(this.coins) || 0) + actualAdd;
+            this.dailyEarned = daily + actualAdd;
+
             this.saveTxLocal();
             this.pendingSync = true;
             this.updateUIDisplay();
@@ -240,7 +248,9 @@ const GoldManager = {
         const modalGold = document.querySelector('.modal-gold-text');
         const modalGoldWrapper = document.querySelector('.modal-gold-wrapper');
 
-        if (localStorage.getItem('is_logged_in') === 'true') {
+        const isLoggedIn = localStorage.getItem('is_logged_in') === 'true' || !!localStorage.getItem('user_name');
+
+        if (isLoggedIn) {
             const displayValue = this.coins.toLocaleString();
             if (this.coinTextEl) this.coinTextEl.textContent = displayValue;
             if (modalGold) modalGold.textContent = displayValue;
@@ -320,11 +330,47 @@ const TimeManager = {
         // Check Auth & Initial Load
         if (this.sb) {
             try {
-                const { data: { session } } = await this.sb.auth.getSession();
+                let { data: { session } } = await this.sb.auth.getSession();
+
+                // RECOVERY: If session is missing, try to recover from local custom token
+                if (!session) {
+                    try {
+                        const localToken = localStorage.getItem('supabase.auth.token');
+                        if (localToken) {
+                            const parsed = JSON.parse(localToken);
+                            if (parsed.refresh_token && parsed.access_token) {
+                                const { data } = await this.sb.auth.setSession({
+                                    access_token: parsed.access_token,
+                                    refresh_token: parsed.refresh_token
+                                });
+                                session = data.session;
+                                if (session) console.log("Session recovered in global.js");
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Session recovery failed", e);
+                    }
+                }
+
                 const user = session?.user;
                 this.user = user;
 
                 if (user) {
+                    // Robust Sync: Check for unsynced local data (e.g. from games)
+                    const pendingTime = localStorage.getItem('tm_pending_sync');
+                    const pendingGold = localStorage.getItem('gm_pending_sync');
+
+                    if (pendingTime || pendingGold) {
+                        console.log("Unsynced local data found. Pushing to server...");
+                        // Load local values into memory first
+                        const savedT = localStorage.getItem('tm_remaining_seconds');
+                        if (savedT) this.remainingSeconds = parseInt(savedT);
+                        GoldManager.loadFromProfile(null); // Load local coins
+
+                        // Push to Server
+                        await this.syncTimeRemote(true);
+                    }
+
                     console.log("Logged in as:", user.email);
                     // 1. Fetch Server Time (Authority)
                     await this.fetchRemoteTime();
@@ -476,6 +522,7 @@ const TimeManager = {
 
     saveTimeLocal: function () {
         localStorage.setItem('tm_remaining_seconds', this.remainingSeconds);
+        localStorage.setItem('tm_pending_sync', 'true');
         this.pendingSync = true;
     },
 
@@ -547,6 +594,7 @@ const TimeManager = {
             // error handle
         } else {
             this.pendingSync = false;
+            localStorage.removeItem('tm_pending_sync');
             GoldManager.markSynced();
         }
     },
