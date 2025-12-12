@@ -2096,9 +2096,14 @@
         };
 
         function setDeviceMode(mode) {
-            // Do not save preference
+            localStorage.setItem('deviceMode', mode);
             applyDeviceMode(mode);
             document.getElementById('deviceModal').style.display = 'none';
+
+            // Start Session
+            if (typeof TimeManager !== 'undefined') {
+                TimeManager.startSession();
+            }
 
             // Start Music on interaction
             MusicManager.start();
