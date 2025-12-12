@@ -1,1 +1,665 @@
-﻿<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=1280,initial-scale=1"><title>2048 | Man Games</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>:root{--bg-color:#faf8ef;--text-color:#776e65;--grid-color:#bbada0;--cell-empty:#cdc1b4}*{margin:0;padding:0;box-sizing:border-box;user-select:none}body{font-family:Nunito,sans-serif;background-color:var(--bg-color);color:var(--text-color);display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px}h1{font-family:Fredoka,sans-serif;font-size:4rem;margin-bottom:10px;color:#776e65}.header-container{display:flex;justify-content:space-between;align-items:center;width:400px;margin-bottom:20px}.score-box{background:#bbada0;padding:5px 15px;border-radius:5px;color:#fff;text-align:center;min-width:80px}.score-label{font-size:.8rem;text-transform:uppercase;font-weight:700}.score-value{font-size:1.5rem;font-weight:700}.game-container{width:400px;height:400px;background:var(--grid-color);border-radius:10px;padding:10px;position:relative;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:10px;outline:0}.cell{background:var(--cell-empty);border-radius:5px;width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:2rem;font-weight:700;color:#776e65;transition:all .1s ease-in-out}.tile-2{background:#eee4da}.tile-4{background:#ede0c8}.tile-8{background:#f2b179;color:#f9f6f2}.tile-16{background:#f59563;color:#f9f6f2}.tile-32{background:#f67c5f;color:#f9f6f2}.tile-64{background:#f65e3b;color:#f9f6f2}.tile-128{background:#edcf72;color:#f9f6f2;font-size:1.8rem}.tile-256{background:#edcc61;color:#f9f6f2;font-size:1.8rem}.tile-512{background:#edc850;color:#f9f6f2;font-size:1.8rem}.tile-1024{background:#edc53f;color:#f9f6f2;font-size:1.5rem}.tile-2048{background:#edc22e;color:#f9f6f2;font-size:1.5rem}.tile-new{animation:popIn .2s}.tile-merged{animation:popIn .2s}@keyframes popIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}.back-btn{margin-top:30px;color:var(--text-color);text-decoration:none;font-weight:700;opacity:.8;transition:opacity .2s}.back-btn:hover{opacity:1;text-decoration:underline}.controls-hint{margin-top:20px;font-size:1rem;color:#776e65}.modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(238,228,218,.73);z-index:100;display:none;justify-content:center;align-items:center;border-radius:10px;flex-direction:column;text-align:center}.modal h2{font-size:3rem;color:#776e65;margin-bottom:20px}button{padding:10px 20px;border-radius:5px;border:none;font-family:Fredoka,sans-serif;font-size:1.2rem;cursor:pointer;background:#8f7a66;color:#fff;font-weight:700}button:hover{background:#9f8b77}.mobile-controls{display:none;flex-direction:column;align-items:center;gap:10px;margin-top:20px}body.mode-mobile .mobile-controls{display:flex}.control-row{display:flex;gap:10px}.control-btn{width:60px;height:60px;font-size:1.5rem;border-radius:10px;background:#8f7a66;color:#fff;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 0 #7f6a56;transition:transform .1s}.control-btn:active{transform:translateY(4px);box-shadow:none}body.mode-tv{cursor:none}</style></head><body><div class="header-container"><h1>2048</h1><div class="score-box"><div class="score-label">SCORE</div><div class="score-value" id="score">0</div></div></div><div class="game-container" id="grid" tabindex="0"><div class="modal-overlay" id="gameOverModal"><h2>Game Over!</h2><button onclick="resetGame()">Try Again</button> <button onclick="goHome(event)" style="margin-top:10px;background-color:#8f7a66;display:block;width:100%">Back to Home</button></div></div><div class="mobile-controls"><button class="control-btn" onclick='move("UP")'>▲</button><div class="control-row"><button class="control-btn" onclick='move("LEFT")'>◀</button> <button class="control-btn" onclick='move("DOWN")'>▼</button> <button class="control-btn" onclick='move("RIGHT")'>▶</button></div></div><div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div><div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div><a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a><script>const gridElement=document.getElementById("grid"),scoreElement=document.getElementById("score"),gameOverModal=document.getElementById("gameOverModal");document.body.style.overflow="hidden",document.addEventListener("keydown",e=>{["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.code)>-1&&e.preventDefault()},{passive:!1});let grid=[],score=0,gameActive=!0,hasReached512=!1,hasReached1024=!1,hasReached2048=!1;const SoundManager={ctx:null,init:function(){this.ctx||(this.ctx=new(window.AudioContext||window.webkitAudioContext))},playTone:function(e,t,n,o=.1){this.ctx||this.init();const i=this.ctx.createOscillator(),r=this.ctx.createGain();i.type=t,i.frequency.setValueAtTime(e,this.ctx.currentTime),r.gain.setValueAtTime(o,this.ctx.currentTime),r.gain.exponentialRampToValueAtTime(.01,this.ctx.currentTime+n),i.connect(r),r.connect(this.ctx.destination),i.start(),i.stop(this.ctx.currentTime+n)},move:function(){this.playTone(200,"sine",.05,.05)},merge:function(){this.playTone(400,"sine",.1,.1),setTimeout(()=>this.playTone(600,"sine",.1,.1),50)},coin:function(){this.playTone(1200,"sine",.1,.1)}};function initGame(){grid=Array(4).fill().map(()=>Array(4).fill(0)),score=0,scoreElement.textContent="0",gameActive=!0,gameOverModal.style.display="none",hasReached512=!1,hasReached1024=!1,hasReached2048=!1,addRandomTile(),addRandomTile(),renderGrid()}function addRandomTile(){const e=[];for(let t=0;t<4;t++)for(let n=0;n<4;n++)0===grid[t][n]&&e.push({r:t,c:n});if(e.length>0){const{r:t,c:n}=e[Math.floor(Math.random()*e.length)];grid[t][n]=Math.random()<.9?2:4}}function renderGrid(){const e=document.getElementById("gameOverModal");gridElement.innerHTML="",gridElement.appendChild(e);for(let e=0;e<4;e++)for(let t=0;t<4;t++){const n=document.createElement("div");n.className="cell";const o=grid[e][t];o>0&&(n.textContent=o,n.classList.add(`tile-${o}`),o>2048&&n.classList.add("tile-2048")),gridElement.appendChild(n)}}function move(e){if(!gameActive)return;let t=!1,n=!1;const o=e=>e[0].map((t,n)=>e.map(e=>e[n]).reverse());let i=JSON.parse(JSON.stringify(grid));"UP"===e?i=o(o(o(i))):"RIGHT"===e?i=o(o(i)):"DOWN"===e&&(i=o(i));for(let e=0;e<4;e++){let o=i[e].filter(e=>0!==e);for(let e=0;e<o.length-1;e++)if(o[e]===o[e+1]){o[e]*=2,score+=o[e];const t=o[e];512!==t||hasReached512?1024!==t||hasReached1024?2048!==t||hasReached2048||(hasReached2048=!0,awardCoin()):(hasReached1024=!0,awardCoin()):(hasReached512=!0,awardCoin()),o.splice(e+1,1),n=!0}for(;o.length<4;)o.push(0);JSON.stringify(i[e])!==JSON.stringify(o)&&(t=!0),i[e]=o}"UP"===e?i=o(i):"RIGHT"===e?i=o(o(i)):"DOWN"===e&&(i=o(o(o(i)))),t&&(grid=i,scoreElement.textContent=score,addRandomTile(),renderGrid(),n?SoundManager.merge():SoundManager.move(),checkGameOver()&&(gameActive=!1,gameOverModal.style.display="flex","undefined"!=typeof TimeManager&&TimeManager.syncTimeRemote(!0),setTimeout(()=>gameOverModal.querySelector("button").focus(),100)))}function awardCoin(){"undefined"!=typeof GoldManager&&GoldManager.addCoins(1),SoundManager.coin();document.querySelector(".header-container");const e=document.createElement("div");e.innerHTML="+1 Gold Coin!",e.style.position="absolute",e.style.top="10px",e.style.left="50%",e.style.transform="translateX(-50%)",e.style.color="#FFD700",e.style.fontWeight="bold",e.style.fontSize="2rem",e.style.textShadow="1px 1px 2px black",e.style.zIndex=1e3,e.style.animation="popIn 0.5s ease-out",document.body.appendChild(e),setTimeout(()=>e.remove(),2e3)}function checkGameOver(){for(let e=0;e<4;e++)for(let t=0;t<4;t++)if(0===grid[e][t])return!1;for(let e=0;e<4;e++)for(let t=0;t<4;t++){if(t<3&&grid[e][t]===grid[e][t+1])return!1;if(e<3&&grid[e][t]===grid[e+1][t])return!1}return!0}function resetGame(){initGame()}window.onload=()=>{document.getElementById("grid").focus()},gridElement.addEventListener("blur",()=>{setTimeout(()=>gridElement.focus(),50)});let holdRepeat=null;function pressMove(e){gameActive&&(move(e),clearInterval(holdRepeat),holdRepeat=setInterval(()=>move(e),150))}function toggleFullScreen(){document.fullscreenElement?document.exitFullscreen&&document.exitFullscreen():document.documentElement.requestFullscreen().catch(e=>{console.log(`Error attempting to enable full-screen mode: ${e.message} (${e.name})`)})}async function goHome(e){e&&e.preventDefault(),"undefined"!=typeof TimeManager&&await TimeManager.syncTimeRemote(!0),window.location.href="index.html"}document.addEventListener("keyup",()=>clearInterval(holdRepeat)),document.addEventListener("keydown",e=>{const t=e.key,n=e.keyCode;console.log("Key pressed:",t,n);let o=!1;gameActive?["ArrowUp","2","w","W"].includes(t)||38===n||19===n?(pressMove("UP"),o=!0):["ArrowDown","8","s","S"].includes(t)||40===n||20===n?(pressMove("DOWN"),o=!0):["ArrowLeft","4","a","A"].includes(t)||37===n||21===n?(pressMove("LEFT"),o=!0):(["ArrowRight","6","d","D"].includes(t)||39===n||22===n)&&(pressMove("RIGHT"),o=!0):(["Enter"," ","5"].includes(t)||13===n||23===n)&&(resetGame(),o=!0),"Backspace"===t||"Escape"===t||8===n||27===n||461===n||10009===n||4===n?(window.location.href="index.html",o=!0):"0"!==t&&"f"!==t.toLowerCase()||(toggleFullScreen(),o=!0),o&&(e.preventDefault(),e.stopPropagation())},{passive:!1}),window.addEventListener("DOMContentLoaded",()=>{const e=new URLSearchParams(window.location.search).get("mode");e&&document.body.classList.add(`mode-${e}`)}),initGame()</script><script src="global.js?v=11"></script></body></html>
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1">
+    <title>2048 | Man Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-color: #faf8ef;
+            --text-color: #776e65;
+            --grid-color: #bbada0;
+            --cell-empty: #cdc1b4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 4rem;
+            margin-bottom: 10px;
+            color: #776e65;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 400px;
+            margin-bottom: 20px;
+        }
+
+        .score-box {
+            background: #bbada0;
+            padding: 5px 15px;
+            border-radius: 5px;
+            color: white;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .score-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .game-container {
+            width: 400px;
+            height: 400px;
+            background: var(--grid-color);
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            outline: none;
+            /* Remove focus outline */
+        }
+
+        .cell {
+            background: var(--cell-empty);
+            border-radius: 5px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #776e65;
+            transition: all 0.1s ease-in-out;
+        }
+
+        /* Tile Colors */
+        .tile-2 {
+            background: #eee4da;
+        }
+
+        .tile-4 {
+            background: #ede0c8;
+        }
+
+        .tile-8 {
+            background: #f2b179;
+            color: #f9f6f2;
+        }
+
+        .tile-16 {
+            background: #f59563;
+            color: #f9f6f2;
+        }
+
+        .tile-32 {
+            background: #f67c5f;
+            color: #f9f6f2;
+        }
+
+        .tile-64 {
+            background: #f65e3b;
+            color: #f9f6f2;
+        }
+
+        .tile-128 {
+            background: #edcf72;
+            color: #f9f6f2;
+            font-size: 1.8rem;
+        }
+
+        .tile-256 {
+            background: #edcc61;
+            color: #f9f6f2;
+            font-size: 1.8rem;
+        }
+
+        .tile-512 {
+            background: #edc850;
+            color: #f9f6f2;
+            font-size: 1.8rem;
+        }
+
+        .tile-1024 {
+            background: #edc53f;
+            color: #f9f6f2;
+            font-size: 1.5rem;
+        }
+
+        .tile-2048 {
+            background: #edc22e;
+            color: #f9f6f2;
+            font-size: 1.5rem;
+        }
+
+        .tile-new {
+            animation: popIn 0.2s;
+        }
+
+        .tile-merged {
+            animation: popIn 0.2s;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .back-btn {
+            margin-top: 30px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .back-btn:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .controls-hint {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #776e65;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(238, 228, 218, 0.73);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .modal h2 {
+            font-size: 3rem;
+            color: #776e65;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: #8f7a66;
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #9f8b77;
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        body.mode-mobile .mobile-controls {
+            display: flex;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            background: #8f7a66;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 0 #7f6a56;
+            transition: transform 0.1s;
+        }
+
+        .control-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        body.mode-tv {
+            cursor: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-container">
+        <h1>2048</h1>
+        <div class="score-box">
+            <div class="score-label">SCORE</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+    </div>
+
+    <div class="game-container" id="grid" tabindex="0">
+        <!-- Cells generated by JS -->
+        <div class="modal-overlay" id="gameOverModal">
+            <h2>Game Over!</h2>
+            <button onclick="resetGame()">Try Again</button>
+            <button onclick="goHome(event)"
+                style="margin-top: 10px; background-color: #8f7a66; display: block; width: 100%;">Back to Home</button>
+        </div>
+    </div>
+
+    <div class="mobile-controls">
+        <button class="control-btn" onclick="move('UP')">▲</button>
+        <div class="control-row">
+            <button class="control-btn" onclick="move('LEFT')">◀</button>
+            <button class="control-btn" onclick="move('DOWN')">▼</button>
+            <button class="control-btn" onclick="move('RIGHT')">▶</button>
+        </div>
+    </div>
+
+    <div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div>
+    <div class="controls-hint">Use Arrow Keys or 2/4/6/8 to Move</div>
+    <a href="#" class="back-btn" onclick="goHome(event)">🏠 Back to Home</a>
+
+    <script>
+        const gridElement = document.getElementById('grid');
+        const scoreElement = document.getElementById('score');
+        const gameOverModal = document.getElementById('gameOverModal');
+
+        // 1. Global Scroll Prevention for TV
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", e => {
+            // Allow F5, F12, etc. if needed, but generally prevent default for game keys
+            // Prevent default for Arrow keys and Space to stop scrolling
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        let grid = [];
+        let score = 0;
+        let gameActive = true;
+        let hasReached512 = false;
+        let hasReached1024 = false;
+        let hasReached2048 = false;
+
+        // Sound Manager
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone: function (freq, type, duration, vol = 0.1) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            move: function () { this.playTone(200, 'sine', 0.05, 0.05); },
+            merge: function () {
+                this.playTone(400, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(600, 'sine', 0.1, 0.1), 50);
+            },
+            coin: function () { this.playTone(1200, 'sine', 0.1, 0.1); }
+        };
+
+        function initGame() {
+            grid = Array(4).fill().map(() => Array(4).fill(0));
+            score = 0;
+            scoreElement.textContent = '0';
+            gameActive = true;
+            gameOverModal.style.display = 'none';
+            hasReached512 = false;
+            hasReached1024 = false;
+            hasReached2048 = false;
+
+            // Add two random tiles
+            addRandomTile();
+            addRandomTile();
+            renderGrid();
+        }
+
+        function addRandomTile() {
+            const emptyCells = [];
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (grid[r][c] === 0) emptyCells.push({ r, c });
+                }
+            }
+            if (emptyCells.length > 0) {
+                const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+            }
+        }
+
+        function renderGrid() {
+            // Clear grid but keep modal
+            const modal = document.getElementById('gameOverModal');
+            gridElement.innerHTML = '';
+            gridElement.appendChild(modal);
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const val = grid[r][c];
+                    if (val > 0) {
+                        cell.textContent = val;
+                        cell.classList.add(`tile-${val}`);
+                        if (val > 2048) cell.classList.add('tile-2048');
+                    }
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function move(direction) {
+            if (!gameActive) return;
+
+            let moved = false;
+            let merged = false;
+
+            const rotateGrid = (g) => g[0].map((_, i) => g.map(row => row[i]).reverse());
+
+            // Normalize to "Left" movement logic
+            let tempGrid = JSON.parse(JSON.stringify(grid));
+
+            if (direction === 'UP') tempGrid = rotateGrid(rotateGrid(rotateGrid(tempGrid))); // Rotate 270 (Left becomes Up)
+            else if (direction === 'RIGHT') tempGrid = rotateGrid(rotateGrid(tempGrid)); // Rotate 180
+            else if (direction === 'DOWN') tempGrid = rotateGrid(tempGrid); // Rotate 90
+
+            // Process Left Move
+            for (let r = 0; r < 4; r++) {
+                let row = tempGrid[r].filter(val => val !== 0);
+                for (let i = 0; i < row.length - 1; i++) {
+                    if (row[i] === row[i + 1]) {
+                        row[i] *= 2;
+                        score += row[i];
+
+                        // Check for Coin Rewards
+                        const val = row[i];
+                        if (val === 512 && !hasReached512) {
+                            hasReached512 = true;
+                            awardCoin();
+                        } else if (val === 1024 && !hasReached1024) {
+                            hasReached1024 = true;
+                            awardCoin();
+                        } else if (val === 2048 && !hasReached2048) {
+                            hasReached2048 = true;
+                            awardCoin();
+                        }
+
+                        row.splice(i + 1, 1);
+                        merged = true;
+                    }
+                }
+                while (row.length < 4) row.push(0);
+                if (JSON.stringify(tempGrid[r]) !== JSON.stringify(row)) moved = true;
+                tempGrid[r] = row;
+            }
+
+            // Rotate back
+            if (direction === 'UP') tempGrid = rotateGrid(tempGrid);
+            else if (direction === 'RIGHT') tempGrid = rotateGrid(rotateGrid(tempGrid));
+            else if (direction === 'DOWN') tempGrid = rotateGrid(rotateGrid(rotateGrid(tempGrid)));
+
+            if (moved) {
+                grid = tempGrid;
+                scoreElement.textContent = score;
+                addRandomTile();
+                renderGrid();
+
+                if (merged) SoundManager.merge();
+                else SoundManager.move();
+
+                if (checkGameOver()) {
+                    gameActive = false;
+                    gameOverModal.style.display = 'flex';
+                    // Sync Data on Game Over
+                    if (typeof TimeManager !== 'undefined') {
+                        TimeManager.syncTimeRemote(true);
+                    }
+                    setTimeout(() => gameOverModal.querySelector('button').focus(), 100);
+                }
+            }
+        }
+
+        function awardCoin() {
+            if (typeof GoldManager !== 'undefined') {
+                GoldManager.addCoins(1);
+            }
+            SoundManager.coin();
+            // Show feedback
+            const container = document.querySelector('.header-container');
+            const feedback = document.createElement('div');
+            feedback.innerHTML = "+1 Gold Coin!";
+            feedback.style.position = 'absolute';
+            feedback.style.top = '10px';
+            feedback.style.left = '50%';
+            feedback.style.transform = 'translateX(-50%)';
+            feedback.style.color = '#FFD700';
+            feedback.style.fontWeight = 'bold';
+            feedback.style.fontSize = '2rem';
+            feedback.style.textShadow = '1px 1px 2px black';
+            feedback.style.zIndex = 1000;
+            feedback.style.animation = 'popIn 0.5s ease-out';
+            document.body.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 2000);
+        }
+
+        function checkGameOver() {
+            // Check for empty cells
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (grid[r][c] === 0) return false;
+                }
+            }
+            // Check for merges
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (c < 3 && grid[r][c] === grid[r][c + 1]) return false;
+                    if (r < 3 && grid[r][c] === grid[r + 1][c]) return false;
+                }
+            }
+            return true;
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // Focus game container on load for TV
+        window.onload = () => {
+            document.getElementById('grid').focus();
+        };
+
+        // Keep TV focus locked on grid
+        gridElement.addEventListener("blur", () => {
+            setTimeout(() => gridElement.focus(), 50);
+        });
+
+        // 2. Auto-Repeat Logic for TV Remotes
+        let holdRepeat = null;
+
+        function pressMove(dir) {
+            if (!gameActive) return;
+            // Immediate move
+            move(dir);
+            // Clear any existing repeat
+            clearInterval(holdRepeat);
+            // Start repeating move
+            holdRepeat = setInterval(() => move(dir), 150);
+        }
+
+        // Clear repeat on key release
+        document.addEventListener("keyup", () => clearInterval(holdRepeat));
+
+        // Input Handling
+        document.addEventListener("keydown", (e) => {
+            const key = e.key;
+            const keyCode = e.keyCode;
+
+            // Debug log for TV keys
+            console.log("Key pressed:", key, keyCode);
+
+            // TV Remote Keycodes
+            const TV_LEFT = 37; // Standard Arrow Left
+            const TV_UP = 38;   // Standard Arrow Up
+            const TV_RIGHT = 39;// Standard Arrow Right
+            const TV_DOWN = 40; // Standard Arrow Down
+            const TV_ENTER = 13;
+
+            // Alternate / Old TV Keycodes
+            const ALT_LEFT = 21;
+            const ALT_UP = 19;
+            const ALT_RIGHT = 22;
+            const ALT_DOWN = 20;
+            const ALT_ENTER = 23;
+            const ALT_BACK = 4;
+            const TIZEN_BACK = 10009;
+
+            let handled = false;
+
+            // Handle Reset if Game Over
+            if (!gameActive) {
+                if (['Enter', ' ', '5'].includes(key) || keyCode === TV_ENTER || keyCode === ALT_ENTER) {
+                    resetGame();
+                    handled = true;
+                }
+            } else {
+                // Use pressMove instead of tryMove
+                if (['ArrowUp', '2', 'w', 'W'].includes(key) || keyCode === TV_UP || keyCode === ALT_UP) {
+                    pressMove('UP');
+                    handled = true;
+                }
+                else if (['ArrowDown', '8', 's', 'S'].includes(key) || keyCode === TV_DOWN || keyCode === ALT_DOWN) {
+                    pressMove('DOWN');
+                    handled = true;
+                }
+                else if (['ArrowLeft', '4', 'a', 'A'].includes(key) || keyCode === TV_LEFT || keyCode === ALT_LEFT) {
+                    pressMove('LEFT');
+                    handled = true;
+                }
+                else if (['ArrowRight', '6', 'd', 'D'].includes(key) || keyCode === TV_RIGHT || keyCode === ALT_RIGHT) {
+                    pressMove('RIGHT');
+                    handled = true;
+                }
+            }
+
+            // Handle Back Button
+            if (key === 'Backspace' || key === 'Escape' || keyCode === 8 || keyCode === 27 || keyCode === 461 || keyCode === TIZEN_BACK || keyCode === ALT_BACK) {
+                window.location.href = 'index.html';
+                handled = true;
+            }
+            else if (key === '0' || key.toLowerCase() === 'f') {
+                toggleFullScreen();
+                handled = true;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { passive: false });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        async function goHome(event) {
+            if (event) event.preventDefault();
+            if (typeof TimeManager !== 'undefined') {
+                await TimeManager.syncTimeRemote(true);
+            }
+            window.location.href = 'index.html';
+        }
+
+        // Check mode
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            if (mode) {
+                document.body.classList.add(`mode-${mode}`);
+            }
+        });
+
+        initGame();
+
+    </script>
+    <script src="global.js?v=11"></script>
+</body>
+
+</html>
