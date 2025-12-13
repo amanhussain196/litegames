@@ -496,29 +496,36 @@
         /* Strict Mobile (< 600px) */
         @media (max-width: 600px) {
             header {
-                padding: 0.5rem 3%;
-                flex-wrap: nowrap;
+                padding: 0.5rem 2%;
+                flex-wrap: nowrap !important;
                 gap: 5px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 height: 60px;
+                overflow: hidden;
+                /* Prevent horizontal scroll */
             }
 
-            /* Hide Nav on small screens to fit Logo + Actions */
+            /* Hide Nav */
             nav {
                 display: none;
             }
 
-            /* Compact Logo */
+            /* Compact Logo: Hide the 'by Man Studios' part */
             .logo {
                 font-size: 1.2rem;
                 margin: 0;
+                flex-shrink: 1;
+                /* Allow logo to shrink if needed */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
-            .logo img {
-                width: 24px !important;
-                height: 24px !important;
+            .logo span {
+                display: none !important;
+                /* Hide 'by Man Studios' */
             }
 
             /* Right Side Actions Container */
@@ -526,28 +533,58 @@
                 display: flex;
                 align-items: center;
                 gap: 5px;
+                flex-shrink: 0;
+                /* Don't squash buttons */
             }
 
-            /* Action Buttons */
+            /* Zoom buttons: hidden */
+            .btn-zoom {
+                display: none !important;
+            }
+
+            /* Login/Action Buttons: visible and fixed */
             .btn-login,
             #friendsBtn,
             #logoutBtn {
-                padding: 0.4rem 0.8rem;
+                padding: 0.4rem 0.6rem;
                 font-size: 0.75rem;
+                flex-shrink: 0 !important;
+                /* Never hide this */
+                white-space: nowrap;
             }
 
-            /* Timer Widget */
+            /* Mute Button */
+            .btn-mute {
+                font-size: 1.1rem;
+                margin-right: 2px;
+                flex-shrink: 0;
+            }
+
+            /* Timer/Gold Widget */
             #tm-timer-container,
             .tm-inline-timer {
                 transform: scale(0.75);
-                /* Even smaller */
-                margin-right: 0 !important;
+                margin-right: -5px !important;
+                /* Pull it closer */
                 transform-origin: right center;
-                padding: 2px 6px !important;
+                padding: 2px 4px !important;
+                flex-shrink: 1;
+                /* Allow this to squish slightly if must */
+                max-width: 140px;
+                /* Force constraint */
+                overflow: hidden;
             }
 
+            /* HIDE the long 'Log in to earn gold' text on mobile */
+            #tm-gold-wrapper span {
+                display: none !important;
+            }
+
+            /* Show just the coin icon if guest, or nothing? 
+               If text is hidden, the icon remains. That's fine. */
+
             .hero {
-                padding-top: 90px;
+                padding-top: 80px;
             }
 
             .hero h1 {
