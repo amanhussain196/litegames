@@ -573,6 +573,16 @@
                 max-width: 140px;
                 /* Force constraint */
                 overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                /* Align right */
+            }
+
+            /* Hide vertical divider inside timer on mobile for cleaner look */
+            #tm-timer-container>div[style*="width: 1px"],
+            .tm-inline-timer>div[style*="width: 1px"] {
+                display: none !important;
             }
 
             /* HIDE the long 'Log in to earn gold' text on mobile */
