@@ -356,19 +356,28 @@ const TimeManager = {
                 this.user = user;
 
                 if (user) {
-                    // Robust Sync: Check for unsynced local data (e.g. from games)
-                    const pendingTime = localStorage.getItem('tm_pending_sync');
-                    const pendingGold = localStorage.getItem('gm_pending_sync');
+                    // Check if we just logged in
+                    const justLoggedIn = localStorage.getItem('just_logged_in');
 
-                    if (pendingTime || pendingGold) {
-                        console.log("Unsynced local data found. Pushing to server...");
-                        // Load local values into memory first
-                        const savedT = localStorage.getItem('tm_remaining_seconds');
-                        if (savedT) this.remainingSeconds = parseInt(savedT);
-                        GoldManager.loadFromProfile(null); // Load local coins
+                    if (justLoggedIn) {
+                        console.log("Fresh login detected. Trusting Server Data.");
+                        localStorage.removeItem('just_logged_in');
+                        // SKIP push to prevent overwriting server data with Guest data
+                    } else {
+                        // Robust Sync: Check for unsynced local data (e.g. from games)
+                        const pendingTime = localStorage.getItem('tm_pending_sync');
+                        const pendingGold = localStorage.getItem('gm_pending_sync');
 
-                        // Push to Server
-                        await this.syncTimeRemote(true);
+                        if (pendingTime || pendingGold) {
+                            console.log("Unsynced local data found. Pushing to server...");
+                            // Load local values into memory first
+                            const savedT = localStorage.getItem('tm_remaining_seconds');
+                            if (savedT) this.remainingSeconds = parseInt(savedT);
+                            GoldManager.loadFromProfile(null); // Load local coins
+
+                            // Push to Server
+                            await this.syncTimeRemote(true);
+                        }
                     }
 
                     console.log("Logged in as:", user.email);

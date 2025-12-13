@@ -170,6 +170,8 @@ const AuthManager = {
     setLocalSession(username, session) {
         localStorage.setItem('user_name', username);
         localStorage.setItem('is_logged_in', 'true');
+        // Flag to tell Global.js to trust Server over Local on first load
+        localStorage.setItem('just_logged_in', 'true'); 
         if (session) {
             localStorage.setItem('supabase.auth.token', JSON.stringify(session));
         }
