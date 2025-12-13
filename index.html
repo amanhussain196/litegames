@@ -494,33 +494,25 @@
         }
 
         /* Strict Mobile (< 600px) */
+        /* Strict Mobile (< 600px) - 3 Line Header Layout */
         @media (max-width: 600px) {
             header {
-                padding: 0.5rem 2%;
-                flex-wrap: nowrap !important;
-                gap: 5px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                height: 60px;
-                overflow: hidden;
-                /* Prevent horizontal scroll */
+                flex-direction: column;
+                height: auto;
+                padding: 0;
+                background: white;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             }
 
-            /* Hide Nav */
-            nav {
-                display: none;
-            }
-
-            /* Compact Logo: Hide the 'by Man Studios' part */
+            /* LINE 1: Logo Only */
             .logo {
-                font-size: 1.2rem;
+                order: 1;
+                width: 100%;
+                text-align: center;
+                padding: 10px 0 5px;
+                font-size: 1.5rem;
+                display: block;
                 margin: 0;
-                flex-shrink: 1;
-                /* Allow logo to shrink if needed */
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
             }
 
             .logo span {
@@ -528,13 +520,17 @@
                 /* Hide 'by Man Studios' */
             }
 
-            /* Right Side Actions Container */
+            /* LINE 2: Actions (Time, Gold, Buttons) */
             header>div:last-child {
+                order: 2;
+                width: 100%;
                 display: flex;
+                justify-content: center;
                 align-items: center;
-                gap: 5px;
-                flex-shrink: 0;
-                /* Don't squash buttons */
+                padding: 5px 0 10px;
+                gap: 15px;
+                flex-wrap: wrap;
+                /* allow wrap if needed */
             }
 
             /* Zoom buttons: hidden */
@@ -542,75 +538,98 @@
                 display: none !important;
             }
 
-            /* Login/Action Buttons: visible and fixed */
+            /* Action Item Sizing */
             .btn-login,
             #friendsBtn,
             #logoutBtn {
-                padding: 0.4rem 0.6rem;
-                font-size: 0.75rem;
-                flex-shrink: 0 !important;
-                /* Never hide this */
-                white-space: nowrap;
-            }
-
-            /* Mute Button */
-            .btn-mute {
-                font-size: 1.1rem;
-                margin-right: 2px;
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
                 flex-shrink: 0;
             }
 
-            /* Timer/Gold Widget */
+            .btn-mute {
+                font-size: 1.2rem;
+            }
+
+            /* Restore Timer Size slightly */
             #tm-timer-container,
             .tm-inline-timer {
-                transform: scale(0.75);
-                margin-right: -5px !important;
-                /* Pull it closer */
-                transform-origin: right center;
-                padding: 2px 4px !important;
-                flex-shrink: 1;
-                /* Allow this to squish slightly if must */
-                max-width: 140px;
-                /* Force constraint */
-                overflow: hidden;
+                transform: scale(0.9);
+                margin: 0 !important;
+                padding: 4px 10px !important;
+                max-width: none;
+                flex-shrink: 0;
                 display: flex;
                 align-items: center;
-                justify-content: flex-end;
-                /* Align right */
             }
 
-            /* Hide vertical divider inside timer on mobile for cleaner look */
+            /* Show divider again since we have space */
             #tm-timer-container>div[style*="width: 1px"],
             .tm-inline-timer>div[style*="width: 1px"] {
-                display: none !important;
+                display: block !important;
             }
 
-            /* HIDE the long 'Log in to earn gold' text on mobile */
             #tm-gold-wrapper span {
                 display: none !important;
             }
 
-            /* Show just the coin icon if guest, or nothing? 
-               If text is hidden, the icon remains. That's fine. */
+            /* LINE 3: Navigation */
+            nav {
+                display: block !important;
+                /* Show nav */
+                order: 3;
+                width: 100%;
+                background: #f8f9fa;
+                border-top: 1px solid #f0f0f0;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
 
+            nav ul {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 10px 0;
+                margin: 0;
+                gap: 15px;
+                list-style: none;
+                white-space: nowrap;
+            }
+
+            nav li {
+                margin: 0;
+            }
+
+            nav a {
+                font-size: 0.8rem;
+                color: #555;
+                font-weight: 700;
+                padding: 5px;
+                display: inline-block;
+            }
+
+            nav a.active {
+                color: #4ECDC4;
+            }
+
+            /* Hero adjustment for taller header */
             .hero {
-                padding-top: 80px;
+                padding-top: 160px;
             }
 
             .hero h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
 
             .stats-bar {
                 flex-direction: column;
-                transform: none;
-                margin-top: -1.5rem;
-                gap: 0.5rem;
+                margin-top: -1rem;
+                gap: 1rem;
             }
 
             .stat-item {
                 transform: none !important;
-                padding: 0.8rem;
+                padding: 1rem;
             }
         }
 
